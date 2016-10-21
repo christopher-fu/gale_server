@@ -24,5 +24,6 @@ defmodule GaleServer.Router do
     pipe_through :api
 
     get "/users", UserController, :get_users
+    post "/users", UserController, :make_user
   end
 end

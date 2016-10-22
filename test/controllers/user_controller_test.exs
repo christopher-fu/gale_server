@@ -20,4 +20,24 @@ defmodule GaleServer.UserControllerTest do
 
     assert response == expected
   end
+
+  test "make_user/2 makes a new user" do
+    response = build_conn()
+      |> post("/api/users", %{username: "chris", password: "pass"})
+      |> json_response(201)
+
+    expected = %{
+      "error" => false,
+      "payload" => %{
+        "user" => %{
+          "username" => "chris"
+        }
+      }
+    }
+
+    assert response == expected
+
+    user = Repo.get_by!(User, username: "chris")
+    assert user.username === "chris" and user.password === "pass"
+  end
 end

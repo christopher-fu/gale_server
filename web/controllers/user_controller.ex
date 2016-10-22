@@ -10,9 +10,17 @@ defmodule GaleServer.UserController do
     changeset = User.changeset(%User{}, post_params)
     case Repo.insert(changeset) do
       {:ok, user} ->
-        render conn, "ok.json", user: user
+        conn
+          |> put_status(201)
+          |> render("ok.json", payload: %{
+               user: %{
+                username: user.username,
+               }
+             })
       {:error, changeset} ->
-        render conn, "err.json", payload: changeset
+        conn
+          |> put_status(400)
+          |> render("err.json", payload: changeset[:errors])
     end
   end
 end

@@ -12,32 +12,64 @@ defmodule GaleServer.UserControllerTest do
       |> json_response(200)
 
     expected = %{
-      "users" => [
-        %{"username" => "chris"},
-        %{"username" => "adam"}
-      ]
+      "error" => false,
+      "payload" => %{
+        "users" => [
+          %{"username" => "chris", "name" => ""},
+          %{"username" => "adam", "name" => ""}
+        ]
+      }
     }
 
     assert response == expected
   end
 
-  test "make_user/2 makes a new user" do
-    response = build_conn()
-      |> post("/api/users", %{username: "chris", password: "pass"})
-      |> json_response(201)
+  describe "make_user/2" do
+    test "creates a new user with username and password" do
+      response = build_conn()
+        |> post("/api/users", %{username: "chris", password: "pass"})
+        |> json_response(201)
 
-    expected = %{
-      "error" => false,
-      "payload" => %{
-        "user" => %{
-          "username" => "chris"
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "user" => %{
+            "username" => "chris",
+            "name" => ""
+          }
         }
       }
-    }
 
-    assert response == expected
+      assert response == expected
 
-    user = Repo.get_by!(User, username: "chris")
-    assert user.username === "chris" and user.password === "pass"
+      user = Repo.get_by!(User, username: "chris")
+      assert user.username === "chris" and user.password === "pass"
+    end
+
+    test "creates a new user with username, name, and password" do
+      response = build_conn()
+        |> post("/api/users", %{username: "chris", name: "chris", password: "pass"})
+        |> json_response(201)
+
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "user" => %{
+            "username" => "chris",
+            "name" => "chris"
+          }
+        }
+      }
+
+      assert response == expected
+
+      user = Repo.get_by!(User, username: "chris")
+      assert user.username === "chris" and user.name === "chris" and user.password === "pass"
+    end
+  end
+
+  test "make_user/2 returns error on missing data" do
+    response = build_conn()
+      |> post("/api/users", %{username: "chris", password: "pass"})
   end
 end

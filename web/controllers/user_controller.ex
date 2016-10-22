@@ -3,7 +3,11 @@ defmodule GaleServer.UserController do
   alias GaleServer.User
 
   def get_users(conn, _params) do
-    render conn, "users.json", users: Repo.all(User)
+    render conn, "ok.json", payload: %{
+      users: Enum.map(Repo.all(User), fn(user) ->
+        %{username: user.username, name: user.name}
+      end)
+    }
   end
 
   def make_user(conn, post_params) do
@@ -15,6 +19,7 @@ defmodule GaleServer.UserController do
           |> render("ok.json", payload: %{
                user: %{
                 username: user.username,
+                name: user.name
                }
              })
       {:error, changeset} ->

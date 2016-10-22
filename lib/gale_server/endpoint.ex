@@ -1,7 +1,7 @@
 defmodule GaleServer.Endpoint do
   use Phoenix.Endpoint, otp_app: :gale_server
 
-  socket "/socket", GaleServer.UserSocket
+  # socket "/socket", GaleServer.UserSocket
 
   # Serve at "/" the static files from "priv/static" directory.
   #

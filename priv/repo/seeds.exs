@@ -9,3 +9,13 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+
+alias GaleServer.Repo
+alias GaleServer.User
+alias GaleServer.Friend
+
+Repo.insert! User.changeset(%User{username: "chris", name: "chris", password: "pass"})
+Repo.insert! User.changeset(%User{username: "adam", name: "adam", password: "adampass"})
+Repo.insert! Friend.changeset(%Friend{status: 0})
+  |> Changeset.put_assoc(:user, chris)
+  |> Changeset.put_assoc(:friend, adam)

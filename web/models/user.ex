@@ -1,10 +1,14 @@
 defmodule GaleServer.User do
   use GaleServer.Web, :model
+  alias GaleServer.Friend
 
   schema "users" do
     field :username, :string
     field :name, :string, default: ""
     field :password, :string
+
+    has_many :_friends, Friend
+    has_many :friends, through: [:_friends, :friend]
 
     timestamps()
   end

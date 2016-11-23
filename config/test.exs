@@ -17,3 +17,9 @@ config :gale_server, GaleServer.Repo,
   database: "gale_server_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
+
+config :comeonin,
+  bcrypt_log_rounds: 4
+
+config :guardian, Guardian,
+  secret_key: "KvX*[2b2hL4e+nm?H%6uzW7gD"

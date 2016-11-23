@@ -11,6 +11,8 @@ defmodule GaleServer.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug Guardian.Plug.VerifyHeader
+    plug Guardian.Plug.LoadResource
   end
 
   scope "/", GaleServer do
@@ -24,6 +26,7 @@ defmodule GaleServer.Router do
     pipe_through :api
 
     get "/users", UserController, :get_users
-    post "/users", UserController, :make_user
+    post "/login", UnauthUserController, :log_in
+    post "/users", UnauthUserController, :make_user
   end
 end

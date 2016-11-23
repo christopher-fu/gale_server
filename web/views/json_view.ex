@@ -1,4 +1,4 @@
-defmodule GaleServer.UserView do
+defmodule GaleServer.JsonView do
   use GaleServer.Web, :view
 
   def render("ok.json", %{payload: payload}) do

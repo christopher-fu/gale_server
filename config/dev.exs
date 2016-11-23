@@ -41,3 +41,6 @@ config :gale_server, GaleServer.Repo,
   database: "gale_server_dev",
   hostname: "localhost",
   pool_size: 10
+
+config :guardian, Guardian,
+  secret_key: "KvX*[2b2hL4e+nm?H%6uzW7gD"

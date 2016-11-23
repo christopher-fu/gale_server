@@ -32,6 +32,8 @@ defmodule GaleServer.User do
       |> validate_required([:username, :password])
       |> validate_format(:username, ~r/^\S+$/)  # No whitespace
       |> validate_format(:name, ~r/^\S+$/)      # No whitespace
+      |> validate_length(:username, max: 256)
+      |> validate_length(:name, max: 256)
       |> unique_constraint(:username)
       |> put_change(:password, Bcrypt.hashpwsalt(password))
     else
@@ -40,6 +42,8 @@ defmodule GaleServer.User do
       |> validate_required([:username, :password])
       |> validate_format(:username, ~r/^\S+$/)  # No whitespace
       |> validate_format(:name, ~r/^\S+$/)      # No whitespace
+      |> validate_length(:username, max: 256)
+      |> validate_length(:name, max: 256)
       |> unique_constraint(:username)
     end
 

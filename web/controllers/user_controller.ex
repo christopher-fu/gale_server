@@ -5,11 +5,22 @@ defmodule GaleServer.UserController do
   plug :put_view, GaleServer.JsonView
   plug Guardian.Plug.EnsureAuthenticated, handler: GaleServer.AuthErrorHandler
 
-  def get_users(conn, _params) do
-    render conn, "ok.json", payload: %{
-      users: Enum.map(Repo.all(User), fn(user) ->
-        %{username: user.username, name: user.name}
-      end)
-    }
+  def get_user(conn, params) do
+    case Repo.get_by(User, username: params["username"]) do
+      nil ->
+        conn
+        |> put_status(404)
+        |> render("error.json", payload: %{
+          message: "No user with username #{params["username"]} exists"
+        })
+      user ->
+        conn
+        |> put_status(200)
+        |> render("ok.json", payload: %{
+          username: user.username,
+          name: user.name,
+          id: user.id
+        })
+    end
   end
 end

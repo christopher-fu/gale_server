@@ -25,8 +25,15 @@ defmodule GaleServer.Router do
   scope "/api", GaleServer do
     pipe_through :api
 
-    get "/users", UserController, :get_users
+    # Unauthorized routes
     post "/login", UnauthUserController, :log_in
-    post "/users", UnauthUserController, :make_user
+    post "/user", UnauthUserController, :make_user
+
+    # Authorized routes
+
+    # :username shows up as a key-value pair in the params map of
+    # UserController.get_user
+    get "/user/:username", UserController, :get_user
+
   end
 end

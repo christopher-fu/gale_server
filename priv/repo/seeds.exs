@@ -18,3 +18,6 @@ adam = Repo.insert! User.changeset(%User{}, %{username: "adam", name: "adam", pa
 Repo.insert! Friend.changeset(%Friend{}, %{status: 0})
   |> Changeset.put_assoc(:user, chris)
   |> Changeset.put_assoc(:friend, adam)
+Repo.insert! Friend.changeset(%Friend{}, %{status: 0})
+  |> Changeset.put_assoc(:user, adam)
+  |> Changeset.put_assoc(:friend, chris)

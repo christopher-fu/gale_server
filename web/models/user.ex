@@ -2,6 +2,7 @@ defmodule GaleServer.User do
   use GaleServer.Web, :model
   alias GaleServer.Friend
   alias Comeonin.Bcrypt
+  alias GaleServer.{Repo, User}
 
   schema "users" do
     field :username, :string
@@ -12,6 +13,13 @@ defmodule GaleServer.User do
     has_many :friends, through: [:_friends, :friend]
 
     timestamps()
+  end
+
+  def get_by_username(username) do
+    case Repo.get_by(User, username: username) do
+      nil -> {:error, "No user with username #{username} exists"}
+      user -> {:ok, user}
+    end
   end
 
   @doc """

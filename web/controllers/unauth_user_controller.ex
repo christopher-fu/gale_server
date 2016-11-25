@@ -34,10 +34,29 @@ defmodule GaleServer.UnauthUserController do
     end
   end
 
-  def log_in(conn, _params) do
-    conn
-    |> put_status(400)
-    |> render("error.json", payload: %{message: "Login failed"})
+  def log_in(conn, params) do
+    username_in_params = Map.has_key?(params, "username")
+    password_in_params = Map.has_key?(params, "password")
+    cond do
+      not username_in_params and not password_in_params ->
+        conn
+          |> put_status(400)
+          |> render("error.json", payload: %{
+            message: "username and password are missing"
+          })
+      not username_in_params ->
+        conn
+          |> put_status(400)
+          |> render("error.json", payload: %{message: "username is missing"})
+      not password_in_params ->
+        conn
+          |> put_status(400)
+          |> render("error.json", payload: %{message: "password is missing"})
+      true ->
+        conn
+          |> put_status(400)
+          |> render("error.json", payload: %{message: "unknown error"})
+    end
   end
 
   def make_user(conn, post_params) do

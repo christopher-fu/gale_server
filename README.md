@@ -112,3 +112,18 @@ The client receives a success response if there exists a user with the given
 On failure, the client receives a response whose payload contains the following
 field:
   - `message`: An error message
+
+#### POST `/user/addfriend`
+Sends a friend request.
+
+The POST body must contain the following field:
+  - `username`: The username of the user to send a friend request to
+
+The client receives a success response if the username corresponds to an
+existing user and there does not already exist a friend relation (pending or
+accepted) between the two users. The`payload` will contain the following fields:
+  - `inserted_at`: The time at which the friend request was made
+
+On failure, the client receives a response whose payload contains the following
+field:
+  - `message`: An error message

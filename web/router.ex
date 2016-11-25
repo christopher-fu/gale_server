@@ -34,6 +34,7 @@ defmodule GaleServer.Router do
     # :username shows up as a key-value pair in the params map of
     # UserController.get_user
     get "/user/:username", UserController, :get_user
-    post "/user/addfriend", UserController, :add_friend
+    get "/friendreq", UserController, :get_friend_reqs
+    post "/friendreq", UserController, :send_friend_req
   end
 end

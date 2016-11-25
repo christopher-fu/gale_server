@@ -1,8 +1,8 @@
-defmodule GaleServer.Friend do
+defmodule GaleServer.FriendReq do
   use GaleServer.Web, :model
   alias GaleServer.User
 
-  schema "friends" do
+  schema "friend_reqs" do
     belongs_to :user, User
     belongs_to :friend, User
     timestamps()

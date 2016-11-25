@@ -113,7 +113,7 @@ On failure, the client receives a response whose payload contains the following
 field:
   - `message`: An error message
 
-#### POST `/user/addfriend`
+#### POST `/friendreq`
 Sends a friend request.
 
 The POST body must contain the following field:
@@ -127,3 +127,12 @@ accepted) between the two users. The`payload` will contain the following fields:
 On failure, the client receives a response whose payload contains the following
 field:
   - `message`: An error message
+
+#### GET `/friendreq`
+Retrieves all of the user's friend requests.
+
+This request never fails. The `payload` will be an array with objects with the
+following schema:
+  - `user`: Username of the request sender
+  - `friend`: Username of the request recipient
+  - `inserted_at`: ISO-8601 timestamp of when the request was made

@@ -1,6 +1,6 @@
 defmodule GaleServer.UserControllerTest do
   use GaleServer.ConnCase, async: true
-  alias GaleServer.{Repo, User, Friend}
+  alias GaleServer.{Repo, User, Friend, FriendReq}
   alias Ecto.Changeset
 
   setup do
@@ -51,18 +51,16 @@ defmodule GaleServer.UserControllerTest do
     end
   end
 
-  describe "add_friend/2" do
-    test "adds friend", %{
-      chris: chris, adam: adam, chris_jwt: chris_jwt
+  describe "send_friend_request/2" do
+    test "sends friend request", %{
+      chris: chris, chris_jwt: chris_jwt
     } do
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> post("/api/user/addfriend", %{username: "adam"})
+        |> post("/api/friendreq", %{username: "adam"})
         |> json_response(200)
-      chris_to_adam = Repo.get_by(Friend, user_id: chris.id)
-      adam_to_chris = Repo.get_by(Friend, user_id: adam.id)
+      chris_to_adam = Repo.get_by(FriendReq, user_id: chris.id)
       refute chris_to_adam == nil
-      refute adam_to_chris == nil
       refute response["error"]
       assert Map.has_key?(response["payload"], "inserted_at")
     end
@@ -70,25 +68,44 @@ defmodule GaleServer.UserControllerTest do
     test "errors on nonexistent friend", %{chris_jwt: chris_jwt} do
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> post("api/user/addfriend", %{username: "asdf"})
+        |> post("/api/friendreq", %{username: "asdf"})
         |> json_response(400)
       assert response["error"]
       assert Map.has_key?(response["payload"], "message")
     end
 
-    test "errors when trying to send a duplicate friend request", %{
+    test "errors when trying to send a duplicate outgoing friend request", %{
       chris: chris,
       adam: adam,
       chris_jwt: chris_jwt
     } do
-      %Friend{}
-      |> Friend.changeset(%{status: 0})
+      %FriendReq{}
+      |> FriendReq.changeset(%{})
       |> Changeset.put_assoc(:user, chris)
       |> Changeset.put_assoc(:friend, adam)
       |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> post("/api/user/addfriend", %{username: adam.username})
+        |> post("/api/friendreq", %{username: adam.username})
+        |> json_response(400)
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
+
+    test "errors when trying to send an outgoing friend request when there is
+    an existing incoming friend request", %{
+      chris: chris,
+      adam: adam,
+      chris_jwt: chris_jwt
+    } do
+      %FriendReq{}
+      |> FriendReq.changeset(%{})
+      |> Changeset.put_assoc(:user, adam)
+      |> Changeset.put_assoc(:friend, chris)
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> post("/api/friendreq", %{username: adam.username})
         |> json_response(400)
       assert response["error"]
       assert Map.has_key?(response["payload"], "message")
@@ -100,16 +117,41 @@ defmodule GaleServer.UserControllerTest do
       chris_jwt: chris_jwt
     } do
       %Friend{}
-      |> Friend.changeset(%{status: 1})
+      |> FriendReq.changeset(%{})
       |> Changeset.put_assoc(:user, chris)
       |> Changeset.put_assoc(:friend, adam)
       |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> post("/api/user/addfriend", %{username: adam.username})
+        |> post("/api/friendreq", %{username: adam.username})
         |> json_response(400)
       assert response["error"]
       assert Map.has_key?(response["payload"], "message")
+    end
+  end
+
+  describe "get_friend_requests/2" do
+    test "gets all friend requests", %{
+      chris: chris, chris_jwt: chris_jwt, adam: adam
+    } do
+      friend_req = %FriendReq{}
+      |> FriendReq.changeset(%{})
+      |> Changeset.put_assoc(:user, chris)
+      |> Changeset.put_assoc(:friend, adam)
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> get("/api/friendreq")
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => [%{
+          "user" => chris.username,
+          "friend" => adam.username,
+          "inserted_at" => Ecto.DateTime.to_iso8601(friend_req.inserted_at)
+        }]
+      }
+      assert response == expected
     end
   end
 end

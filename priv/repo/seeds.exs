@@ -10,14 +10,21 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias GaleServer.{Repo, User, Friend}
+alias GaleServer.{Repo, User, Friend, FriendReq}
 alias Ecto.Changeset
 
-chris = Repo.insert! User.changeset(%User{}, %{username: "chris", name: "chris", password: "pass"})
-adam = Repo.insert! User.changeset(%User{}, %{username: "adam", name: "adam", password: "adampass"})
-Repo.insert! Friend.changeset(%Friend{}, %{status: 0})
+chris = Repo.insert! User.changeset(%User{},
+  %{username: "chris", name: "chris", password: "pass"})
+adam = Repo.insert! User.changeset(%User{},
+  %{username: "adam", name: "adam", password: "adampass"})
+bob = Repo.insert! User.changeset(%User{},
+  %{username: "bob", name: "bob", password: "bobpass"})
+Repo.insert! FriendReq.changeset(%FriendReq{})
   |> Changeset.put_assoc(:user, chris)
   |> Changeset.put_assoc(:friend, adam)
-Repo.insert! Friend.changeset(%Friend{}, %{status: 0})
-  |> Changeset.put_assoc(:user, adam)
+Repo.insert! Friend.changeset(%Friend{})
+  |> Changeset.put_assoc(:user, bob)
   |> Changeset.put_assoc(:friend, chris)
+Repo.insert! Friend.changeset(%Friend{})
+  |> Changeset.put_assoc(:user, chris)
+  |> Changeset.put_assoc(:friend, bob)

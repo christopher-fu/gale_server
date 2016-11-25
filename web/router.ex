@@ -35,6 +35,8 @@ defmodule GaleServer.Router do
     # UserController.get_user
     get "/user/:username", UserController, :get_user
     get "/friendreq", UserController, :get_friend_reqs
+    get "/friendreq/:freq_id", UserController, :get_friend_req
     post "/friendreq", UserController, :send_friend_req
+
   end
 end

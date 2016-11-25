@@ -49,12 +49,20 @@ defmodule GaleServer.UserController do
 
   def send_friend_req(conn, %{"username" => username}) do
     user = Guardian.Plug.current_resource(conn)
-    valid = with {:ok, friend} <- User.get_by_username(username),
-      {:ok} <- friend_req_exists?(user, username),
+    valid = with {:ok, friend} <-
+      (case User.get_by_username(username) do
+        {:ok, friend} -> {:ok, friend}
+        {:error, err_msg} -> {:error, 404, err_msg}
+      end),
+      {:ok} <-
+        (case friend_req_exists?(user, username) do
+          {:ok} -> {:ok}
+          {:error, err_msg} -> {:error, 400, err_msg}
+        end),
       do: {:ok, friend}
     case valid do
-      {:error, err_msg} -> conn
-        |> put_status(400)
+      {:error, err_code, err_msg} -> conn
+        |> put_status(err_code)
         |> render("error.json", payload: %{message: err_msg})
       {:ok, friend} ->
         friend_req = FriendReq.changeset(%FriendReq{}, %{})
@@ -82,13 +90,45 @@ defmodule GaleServer.UserController do
       where: u1.id == ^user.id or u2.id == ^user.id,
       preload: [:user, :friend])
     friend_reqs = Enum.map(friend_reqs, fn (x) -> %{
-        user: x.user.username,
-        friend: x.friend.username,
-        inserted_at: x.inserted_at
-      }
-    end)
+      id: x.id,
+      user: x.user.username,
+      friend: x.friend.username,
+      inserted_at: x.inserted_at
+    } end)
     conn
     |> put_status(200)
     |> render("ok.json", payload: friend_reqs)
+  end
+
+  def get_friend_req(conn, %{"freq_id" => freq_id}) do
+    user = Guardian.Plug.current_resource(conn)
+    valid = with {:ok, friend_req} <-
+      (case Repo.one(from f in FriendReq,
+        join: u1 in User, on: f.user_id == u1.id,
+        join: u2 in User, on: f.friend_id == u2.id,
+        where: (u1.id == ^user.id or u2.id == ^user.id) and f.id == ^freq_id,
+        preload: [:user, :friend]) do
+          nil -> {:error, 400, "You cannot access friend request id ${freq_id}"}
+          friend_req -> {:ok, friend_req}
+        end),
+      do: {:ok, friend_req}
+    case valid do
+      {:error, err_code, err_msg} ->
+        conn
+        |> put_status(err_code)
+        |> render("error.json", payload: %{
+          message: err_msg
+        })
+      {:ok, friend_req} ->
+        friend_req = friend_req |> Repo.preload([:user, :friend])
+        conn
+        |> put_status(200)
+        |> render("ok.json", payload: %{
+          id: friend_req.id,
+          user: friend_req.user.username,
+          friend: friend_req.friend.username,
+          inserted_at: friend_req.inserted_at
+        })
+    end
   end
 end

@@ -24,18 +24,12 @@ defmodule GaleServer.UserController do
   end
 
   defp friend_req_exists?(user, friend_username) do
-    outgoing_friend_req = Repo.one(from f in FriendReq,
-      join: u1 in User, on: f.user_id == u1.id,
-      join: u2 in User, on: f.friend_id == u2.id,
-      where: u1.id == ^user.id and u2.username == ^friend_username)
-    incoming_friend_req = Repo.one(from f in FriendReq,
-      join: u1 in User, on: f.user_id == u1.id,
-      join: u2 in User, on: f.friend_id == u2.id,
-      where: u1.username == ^friend_username and u2.id == ^user.id)
-    friend_rel = Repo.one(from f in Friend,
-      join: u1 in User, on: f.user_id == u1.id,
-      join: u2 in User, on: f.friend_id == u2.id,
-      where: u1.id == ^user.id and u2.username == ^friend_username)
+    {:ok, friend} = User.get_by_username(friend_username)
+    outgoing_friend_req = Repo.one(FriendReq, user_id: user.id,
+      friend_id: friend.id)
+    incoming_friend_req = Repo.one(FriendReq, user_id: friend.id,
+      friend_id: user.id)
+    friend_rel = Repo.one(Friend, user_id: user.id, friend_id: friend.id)
     cond do
       outgoing_friend_req != nil ->
         {:error, "You have already sent a friend request to #{friend_username}"}
@@ -87,7 +81,7 @@ defmodule GaleServer.UserController do
     friend_reqs = Repo.all(from f in FriendReq,
       join: u1 in User, on: f.user_id == u1.id,
       join: u2 in User, on: f.friend_id == u2.id,
-      where: u1.id == ^user.id or u2.id == ^user.id,
+      where: f.user_id == ^user.id or f.friend_id == ^user.id,
       preload: [:user, :friend])
     friend_reqs = Enum.map(friend_reqs, fn (x) -> %{
       id: x.id,
@@ -106,7 +100,8 @@ defmodule GaleServer.UserController do
       (case Repo.one(from f in FriendReq,
         join: u1 in User, on: f.user_id == u1.id,
         join: u2 in User, on: f.friend_id == u2.id,
-        where: (u1.id == ^user.id or u2.id == ^user.id) and f.id == ^freq_id,
+        where: (f.user_id == ^user.id or f.friend_id == ^user.id)
+          and f.id == ^freq_id,
         preload: [:user, :friend]) do
           nil -> {:error, 400, "You cannot access friend request id ${freq_id}"}
           friend_req -> {:ok, friend_req}
@@ -120,7 +115,6 @@ defmodule GaleServer.UserController do
           message: err_msg
         })
       {:ok, friend_req} ->
-        friend_req = friend_req |> Repo.preload([:user, :friend])
         conn
         |> put_status(200)
         |> render("ok.json", payload: %{
@@ -130,5 +124,101 @@ defmodule GaleServer.UserController do
           inserted_at: friend_req.inserted_at
         })
     end
+  end
+
+  def update_friend_req(conn, %{"freq_id" => freq_id, "action" => action})
+    when action == "accept" or action == "reject" or action == "cancel" do
+    user = Guardian.Plug.current_resource(conn)
+    valid = with {:ok, friend_req} <-
+      (case Repo.one(from f in FriendReq,
+        join: u1 in User, on: f.user_id == u1.id,
+        join: u2 in User, on: f.friend_id == u2.id,
+        where: (u1.id == ^user.id or u2.id == ^user.id) and f.id == ^freq_id,
+        preload: [:user, :friend]) do
+          nil -> {:error, 400, "You cannot access friend request id ${freq_id}"}
+          friend_req -> {:ok, friend_req}
+        end),
+      {:ok} <-
+        (case action do
+          "accept" ->
+            if friend_req.user.id == user.id do
+              {:error, 400, "You cannot accept your own friend request"}
+            else
+              {:ok}
+            end
+          "reject" ->
+            if friend_req.user.id == user.id do
+              {:error, 400, "You cannot reject your own friend request"}
+            else
+              {:ok}
+            end
+          "cancel" ->
+            if friend_req.friend.id == user.id do
+              {:error, 400, "You cannot cancel a friend request that you didn't
+                send"}
+            else
+              {:ok}
+            end
+        end),
+      do: {:ok, friend_req}
+    case valid do
+      {:error, err_code, err_msg} ->
+        conn
+        |> put_status(err_code)
+        |> render("error.json", payload: %{
+          message: err_msg
+        })
+      {:ok, friend_req} ->
+        case Repo.delete(friend_req) do
+          {:ok, friend_req} ->
+            case action do
+              "accept" ->
+                friend_req = %Friend{}
+                |> Friend.changeset()
+                |> Changeset.put_assoc(:user, friend_req.user)
+                |> Changeset.put_assoc(:friend, friend_req.friend)
+                |> Repo.insert!()
+                %Friend{}
+                |> Friend.changeset()
+                |> Changeset.put_assoc(:user, friend_req.friend)
+                |> Changeset.put_assoc(:friend, friend_req.user)
+                |> Repo.insert!()
+                conn
+                |> put_status(200)
+                |> render("ok.json", payload: %{
+                  id: friend_req.id,
+                  user: friend_req.user.username,
+                  friend: friend_req.friend.username,
+                  inserted_at: friend_req.inserted_at
+                })
+              "reject" ->
+                conn
+                |> put_status(200)
+                |> render("ok.json")
+              "cancel" ->
+                conn
+                |> put_status(200)
+                |> render("ok.json")
+            end
+          {:error, _} ->
+            conn
+            |> put_status(500)
+            |> render("error.json", payload: %{message: "Error removing friend
+              request id #{friend_req.id}"})
+        end
+    end
+  end
+
+  def update_friend_req(conn, %{"freq_id" => _, "action" => _}) do
+    conn
+    |> put_status(400)
+    |> render("error.json", payload: %{message: "action must be \"accept\",
+      \"reject\", or \"cancel\""})
+  end
+
+  def update_friend_req(conn, %{"freq_id" => _}) do
+    conn
+    |> put_status(400)
+    |> render("error.json", payload: %{message: "Missing action field"})
   end
 end

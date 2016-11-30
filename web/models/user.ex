@@ -1,7 +1,7 @@
 defmodule GaleServer.User do
   use GaleServer.Web, :model
   alias Comeonin.Bcrypt
-  alias GaleServer.{Repo, User, Friend, FriendReq}
+  alias GaleServer.{Repo, User, Friend, FriendReq, Event, EventUser}
 
   schema "users" do
     field :username, :string
@@ -13,6 +13,8 @@ defmodule GaleServer.User do
 
     has_many :_friend_reqs, FriendReq
     has_many :friend_reqs, through: [:_friend_reqs, :friend]
+
+    many_to_many :events, Event, join_through: EventUser
 
     timestamps()
   end

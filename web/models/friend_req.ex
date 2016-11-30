@@ -13,6 +13,6 @@ defmodule GaleServer.FriendReq do
   """
   def changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [])
+    |> cast(params, [:user_id, :friend_id])
   end
 end

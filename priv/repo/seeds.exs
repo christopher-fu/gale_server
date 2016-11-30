@@ -19,12 +19,9 @@ adam = Repo.insert! User.changeset(%User{},
   %{username: "adam", name: "adam", password: "adampass"})
 bob = Repo.insert! User.changeset(%User{},
   %{username: "bob", name: "bob", password: "bobpass"})
-Repo.insert! FriendReq.changeset(%FriendReq{})
-  |> Changeset.put_assoc(:user, chris)
-  |> Changeset.put_assoc(:friend, adam)
-Repo.insert! Friend.changeset(%Friend{})
-  |> Changeset.put_assoc(:user, bob)
-  |> Changeset.put_assoc(:friend, chris)
-Repo.insert! Friend.changeset(%Friend{})
-  |> Changeset.put_assoc(:user, chris)
-  |> Changeset.put_assoc(:friend, bob)
+Repo.insert! FriendReq.changeset(%FriendReq{},
+  %{user_id: chris.id, friend_id: adam.id})
+Repo.insert! Friend.changeset(%Friend{},
+  %{user_id: bob.id, friend_id: chris.id})
+Repo.insert! Friend.changeset(%Friend{},
+  %{user_id: chris.id, friend_id: bob.id})

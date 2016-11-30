@@ -13,6 +13,6 @@ defmodule GaleServer.EventUser do
   """
   def changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [])
+    |> cast(params, [:user_id, :event_id])
   end
 end

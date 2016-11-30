@@ -39,5 +39,6 @@ defmodule GaleServer.Router do
     put "/friendreq/:freq_id", UserController, :update_friend_req
     post "/friendreq", UserController, :send_friend_req
 
+    get "/friend", UserController, :get_friends
   end
 end

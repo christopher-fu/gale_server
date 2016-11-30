@@ -282,125 +282,160 @@ defmodule GaleServer.UserControllerTest do
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
       assert response == expected
     end
+
+    test "errors when trying to accept own friend request", %{
+      chris: chris, chris_jwt: chris_jwt, adam: adam
+    } do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, chris)
+        |> Changeset.put_assoc(:friend, adam)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => "accept"
+        })
+        |> json_response(400)
+      assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
+      assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
+
+    test "errors when trying to reject own friend request", %{
+      chris: chris, chris_jwt: chris_jwt, adam: adam
+    } do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, chris)
+        |> Changeset.put_assoc(:friend, adam)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => "reject"
+        })
+        |> json_response(400)
+      assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
+      assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
+
+    test "errors when trying to cancel sender's friend request", %{
+      chris: chris, adam_jwt: adam_jwt, adam: adam
+    } do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, chris)
+        |> Changeset.put_assoc(:friend, adam)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", adam_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => "cancel"
+        })
+        |> json_response(400)
+      assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
+      assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
+
+    test "errors when trying to accept somebody else's friend request", %{
+      chris_jwt: chris_jwt, adam: adam, bob: bob
+    } do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, adam)
+        |> Changeset.put_assoc(:friend, bob)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => "accept"
+        })
+        |> json_response(400)
+      assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
+      assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
+
+    test "errors when trying to reject somebody else's friend request", %{
+      chris_jwt: chris_jwt, adam: adam, bob: bob
+    } do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, adam)
+        |> Changeset.put_assoc(:friend, bob)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => "reject"
+        })
+        |> json_response(400)
+      assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
+      assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
+
+    test "errors when trying to cancel somebody else's friend request", %{
+      chris_jwt: chris_jwt, adam: adam, bob: bob
+    } do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, adam)
+        |> Changeset.put_assoc(:friend, bob)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => "cancel"
+        })
+        |> json_response(400)
+      assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
+      assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
+      assert response["error"]
+      assert Map.has_key?(response["payload"], "message")
+    end
   end
 
-  test "errors when trying to accept own friend request", %{
-    chris: chris, chris_jwt: chris_jwt, adam: adam
-  } do
-    friend_req = %FriendReq{}
-      |> FriendReq.changeset()
-      |> Changeset.put_assoc(:user, chris)
-      |> Changeset.put_assoc(:friend, adam)
+  describe "get_friends/2" do
+    test "gets all friends",
+      %{chris: chris, chris_jwt: chris_jwt, adam: adam, bob: bob} do
+      %Friend{}
+      |> Friend.changeset(%{user_id: chris.id, friend_id: adam.id})
       |> Repo.insert!()
-    response = build_conn()
-      |> put_req_header("authorization", chris_jwt)
-      |> put("/api/friendreq/#{friend_req.id}", %{
-        "action" => "accept"
-      })
-      |> json_response(400)
-    assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
-    assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
-    assert response["error"]
-    assert Map.has_key?(response["payload"], "message")
-  end
+      %Friend{}
+      |> Friend.changeset(%{user_id: adam.id, friend_id: chris.id})
+      |> Repo.insert!()
+      %Friend{}
+      |> Friend.changeset(%{user_id: chris.id, friend_id: bob.id})
+      |> Repo.insert!()
+      %Friend{}
+      |> Friend.changeset(%{user_id: bob.id, friend_id: chris.id})
+      |> Repo.insert!()
 
-  test "errors when trying to reject own friend request", %{
-    chris: chris, chris_jwt: chris_jwt, adam: adam
-  } do
-    friend_req = %FriendReq{}
-      |> FriendReq.changeset()
-      |> Changeset.put_assoc(:user, chris)
-      |> Changeset.put_assoc(:friend, adam)
-      |> Repo.insert!()
-    response = build_conn()
-      |> put_req_header("authorization", chris_jwt)
-      |> put("/api/friendreq/#{friend_req.id}", %{
-        "action" => "reject"
-      })
-      |> json_response(400)
-    assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
-    assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
-    assert response["error"]
-    assert Map.has_key?(response["payload"], "message")
-  end
+      %{"payload" => friends} = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> get("/api/friend")
+        |> json_response(200)
 
-  test "errors when trying to cancel sender's friend request", %{
-    chris: chris, adam_jwt: adam_jwt, adam: adam
-  } do
-    friend_req = %FriendReq{}
-      |> FriendReq.changeset()
-      |> Changeset.put_assoc(:user, chris)
-      |> Changeset.put_assoc(:friend, adam)
-      |> Repo.insert!()
-    response = build_conn()
-      |> put_req_header("authorization", adam_jwt)
-      |> put("/api/friendreq/#{friend_req.id}", %{
-        "action" => "cancel"
-      })
-      |> json_response(400)
-    assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
-    assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
-    assert response["error"]
-    assert Map.has_key?(response["payload"], "message")
-  end
+      assert length(Enum.filter(friends, fn (fr) -> fr["username"] == "adam" end)) == 1
+      assert length(Enum.filter(friends, fn (fr) -> fr["username"] == "bob" end)) == 1
+    end
 
-  test "errors when trying to accept somebody else's friend request", %{
-    chris_jwt: chris_jwt, adam: adam, bob: bob
-  } do
-    friend_req = %FriendReq{}
-      |> FriendReq.changeset()
-      |> Changeset.put_assoc(:user, adam)
-      |> Changeset.put_assoc(:friend, bob)
-      |> Repo.insert!()
-    response = build_conn()
-      |> put_req_header("authorization", chris_jwt)
-      |> put("/api/friendreq/#{friend_req.id}", %{
-        "action" => "accept"
-      })
-      |> json_response(400)
-    assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
-    assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
-    assert response["error"]
-    assert Map.has_key?(response["payload"], "message")
-  end
-
-  test "errors when trying to reject somebody else's friend request", %{
-    chris_jwt: chris_jwt, adam: adam, bob: bob
-  } do
-    friend_req = %FriendReq{}
-      |> FriendReq.changeset()
-      |> Changeset.put_assoc(:user, adam)
-      |> Changeset.put_assoc(:friend, bob)
-      |> Repo.insert!()
-    response = build_conn()
-      |> put_req_header("authorization", chris_jwt)
-      |> put("/api/friendreq/#{friend_req.id}", %{
-        "action" => "reject"
-      })
-      |> json_response(400)
-    assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
-    assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
-    assert response["error"]
-    assert Map.has_key?(response["payload"], "message")
-  end
-
-  test "errors when trying to cancel somebody else's friend request", %{
-    chris_jwt: chris_jwt, adam: adam, bob: bob
-  } do
-    friend_req = %FriendReq{}
-      |> FriendReq.changeset()
-      |> Changeset.put_assoc(:user, adam)
-      |> Changeset.put_assoc(:friend, bob)
-      |> Repo.insert!()
-    response = build_conn()
-      |> put_req_header("authorization", chris_jwt)
-      |> put("/api/friendreq/#{friend_req.id}", %{
-        "action" => "cancel"
-      })
-      |> json_response(400)
-    assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
-    assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
-    assert response["error"]
-    assert Map.has_key?(response["payload"], "message")
+    test "gets all friends (when non exist)",
+      %{chris_jwt: chris_jwt} do
+        %{"payload" => friends} = build_conn()
+          |> put_req_header("authorization", chris_jwt)
+          |> get("/api/friend")
+          |> json_response(200)
+        assert length(friends) == 0
+    end
   end
 end

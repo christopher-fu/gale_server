@@ -12,5 +12,11 @@ defmodule GaleServer.Repo.Migrations.AddEventUser do
       add :event_id, references(:events), primary_key: true
       timestamps()
     end
+
+    create table(:pending_event_user) do
+      add :user_id, references(:users), primary_key: true
+      add :event_id, references(:events), primary_key: true
+      timestamps()
+    end
   end
 end

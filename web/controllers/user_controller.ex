@@ -221,4 +221,14 @@ defmodule GaleServer.UserController do
     |> put_status(400)
     |> render("error.json", payload: %{message: "Missing action field"})
   end
+
+  def get_friends(conn, _params) do
+    user = Guardian.Plug.current_resource(conn) |> Repo.preload(:friends)
+    render(conn, "ok.json", payload: Enum.map(user.friends, fn (fr) -> %{
+      id: fr.id,
+      username: fr.username,
+      name: fr.name,
+      inserted_at: fr.inserted_at
+    } end))
+  end
 end

@@ -1,9 +1,11 @@
-defmodule GaleServer.Repo.Migrations.AddEventUser do
+defmodule GaleServer.Repo.Migrations.AddEvent do
   use Ecto.Migration
 
   def change do
     create table(:events) do
       add :owner_id, references(:users)
+      add :description, :string, default: ""
+      add :time, :datetime
       timestamps()
     end
 

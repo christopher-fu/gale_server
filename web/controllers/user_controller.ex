@@ -1,24 +1,31 @@
 defmodule GaleServer.UserController do
   use GaleServer.Web, :controller
-  alias GaleServer.{User, Friend, FriendReq}
+  alias GaleServer.{User, Friend, FriendReq, Event}
   alias Ecto.Changeset
 
   plug :put_view, GaleServer.JsonView
   plug Guardian.Plug.EnsureAuthenticated, handler: GaleServer.AuthErrorHandler
 
   def get_user(conn, %{"username" => username}) do
+    user = Guardian.Plug.current_resource(conn)
     case User.get_by_username(username) do
       {:error, err_msg} -> conn
         |> put_status(404)
         |> render("error.json", payload: %{
           message: err_msg
         })
-      {:ok, user} -> conn
-        |> put_status(200)
-        |> render("ok.json", payload: %{
-          username: user.username,
-          name: user.name,
-        })
+      {:ok, requested_user} ->
+        if user.id == requested_user.id do
+          owned_events = Repo.all(Event, owner_id: user.id)
+          # pending_events = Repo.all(for ev in Event, join: eu in EventUser, )
+        else
+          conn
+          |> put_status(200)
+          |> render("ok.json", payload: %{
+            username: user.username,
+            name: user.name,
+          })
+        end
     end
   end
 

@@ -19,7 +19,8 @@ defmodule GaleServer.Mixfile do
   def application do
     [mod: {GaleServer, []},
      applications: [:phoenix, :phoenix_pubsub, :phoenix_html, :cowboy, :logger,
-                    :gettext, :phoenix_ecto, :postgrex, :guardian, :comeonin]]
+                    :gettext, :phoenix_ecto, :postgrex, :guardian, :comeonin,
+                    :timex, :timex_ecto]]
   end
 
   # Specifies which paths to compile per environment.
@@ -39,7 +40,9 @@ defmodule GaleServer.Mixfile do
      {:gettext, "~> 0.11"},
      {:cowboy, "~> 1.0"},
      {:guardian, "~> 0.13.0"},
-     {:comeonin, "~> 2.5"}
+     {:comeonin, "~> 2.5"},
+     {:timex, "~> 3.1.5"},
+     {:timex_ecto, "~> 3.0.5"},
     ]
   end
 

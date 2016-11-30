@@ -10,8 +10,15 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias GaleServer.{Repo, User, Friend, FriendReq}
+alias GaleServer.{Repo, User, Friend, FriendReq, Event, EventUser, PendingEventUser}
 alias Ecto.Changeset
+
+Repo.delete_all(FriendReq)
+Repo.delete_all(Friend)
+Repo.delete_all(Event)
+Repo.delete_all(EventUser)
+Repo.delete_all(PendingEventUser)
+Repo.delete_all(User)
 
 chris = Repo.insert! User.changeset(%User{},
   %{username: "chris", name: "chris", password: "pass"})
@@ -25,3 +32,6 @@ Repo.insert! Friend.changeset(%Friend{},
   %{user_id: bob.id, friend_id: chris.id})
 Repo.insert! Friend.changeset(%Friend{},
   %{user_id: chris.id, friend_id: bob.id})
+
+Repo.insert! Event.changeset(%Event{}, %{owner_id: chris.id,
+  description: "An event!", time: Timex.now})

@@ -150,7 +150,7 @@ defmodule GaleServer.UserControllerTest do
           "id" => friend_req.id,
           "user" => chris.username,
           "friend" => adam.username,
-          "inserted_at" => Ecto.DateTime.to_iso8601(friend_req.inserted_at)
+          "inserted_at" => Timex.format!(friend_req.inserted_at, "{ISO:Extended:Z}")
         }]
       }
       assert response == expected
@@ -176,7 +176,7 @@ defmodule GaleServer.UserControllerTest do
           "id" => friend_req.id,
           "user" => chris.username,
           "friend" => adam.username,
-          "inserted_at" => Ecto.DateTime.to_iso8601(friend_req.inserted_at)
+          "inserted_at" => Timex.format!(friend_req.inserted_at, "{ISO:Extended:Z}")
         }
       }
 
@@ -232,7 +232,7 @@ defmodule GaleServer.UserControllerTest do
           "id" => friend_rel.id,
           "user" => chris.username,
           "friend" => adam.username,
-          "inserted_at" => friend_rel.inserted_at |> Ecto.DateTime.to_iso8601()
+          "inserted_at" => Timex.format!(friend_rel.inserted_at, "{ISO:Extended:Z}")
         }
       }
       refute friend_rel == nil

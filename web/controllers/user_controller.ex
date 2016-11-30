@@ -16,8 +16,16 @@ defmodule GaleServer.UserController do
         })
       {:ok, requested_user} ->
         if user.id == requested_user.id do
-          owned_events = Repo.all(Event, owner_id: user.id)
+          owned_events = Repo.all(from e in Event, where: e.owner_id == ^user.id)
           # pending_events = Repo.all(for ev in Event, join: eu in EventUser, )
+
+          # FIXME
+          conn
+          |> put_status(200)
+          |> render("ok.json", payload: %{
+            username: user.username,
+            name: user.name,
+          })
         else
           conn
           |> put_status(200)
@@ -30,30 +38,46 @@ defmodule GaleServer.UserController do
   end
 
   defp friend_req_exists?(user, friend_username) do
-    {:ok, friend} = User.get_by_username(friend_username)
-    outgoing_friend_req = Repo.one(FriendReq, user_id: user.id,
-      friend_id: friend.id)
-    incoming_friend_req = Repo.one(FriendReq, user_id: friend.id,
-      friend_id: user.id)
-    friend_rel = Repo.one(Friend, user_id: user.id, friend_id: friend.id)
-    cond do
-      outgoing_friend_req != nil ->
-        {:error, "You have already sent a friend request to #{friend_username}"}
-      incoming_friend_req != nil ->
-        {:error, "You already have a friend request from #{friend_username}"}
-      friend_rel != nil ->
-        {:error, "You are already friends with #{friend_username}"}
-      true -> {:ok}
+    case User.get_by_username(friend_username) do
+      {:ok, friend} ->
+        outgoing_friend_req = Repo.one(from fr in FriendReq,
+          join: u1 in User, on: fr.user_id == u1.id,
+          join: u2 in User, on: fr.friend_id == u2.id,
+          where: fr.user_id == ^user.id and fr.friend_id == ^friend.id)
+        incoming_friend_req = Repo.one(from fr in FriendReq,
+          join: u1 in User, on: fr.user_id == u1.id,
+          join: u2 in User, on: fr.friend_id == u2.id,
+          where: fr.user_id == ^friend.id and fr.friend_id == ^user.id)
+        friend_rel = Repo.one(from f in Friend,
+          join: u1 in User, on: f.user_id == u1.id,
+          join: u2 in User, on: f.friend_id == u2.id,
+          where: f.user_id == ^user.id and f.friend_id == ^friend.id)
+        cond do
+          outgoing_friend_req != nil ->
+            {:error, "You have already sent a friend request to #{friend_username}"}
+          incoming_friend_req != nil ->
+            {:error, "You already have a friend request from #{friend_username}"}
+          friend_rel != nil ->
+            {:error, "You are already friends with #{friend_username}"}
+          true -> {:ok}
+        end
+      tup -> tup
     end
   end
 
   def send_friend_req(conn, %{"username" => username}) do
     user = Guardian.Plug.current_resource(conn)
-    valid = with {:ok, friend} <-
-      (case User.get_by_username(username) do
-        {:ok, friend} -> {:ok, friend}
-        {:error, err_msg} -> {:error, 404, err_msg}
+    valid = with {:ok} <-
+      (if user.username == username do
+        {:error, 400, "You cannot send a friend request to yourself"}
+      else
+        {:ok}
       end),
+      {:ok, friend} <-
+        (case User.get_by_username(username) do
+          {:ok, friend} -> {:ok, friend}
+          {:error, err_msg} -> {:error, 404, err_msg}
+        end),
       {:ok} <-
         (case friend_req_exists?(user, username) do
           {:ok} -> {:ok}

@@ -18,7 +18,6 @@ defmodule GaleServer.UserController do
         |> render("ok.json", payload: %{
           username: user.username,
           name: user.name,
-          id: user.id
         })
     end
   end
@@ -225,7 +224,6 @@ defmodule GaleServer.UserController do
   def get_friends(conn, _params) do
     user = Guardian.Plug.current_resource(conn) |> Repo.preload(:friends)
     render(conn, "ok.json", payload: Enum.map(user.friends, fn (fr) -> %{
-      id: fr.id,
       username: fr.username,
       name: fr.name,
       inserted_at: fr.inserted_at

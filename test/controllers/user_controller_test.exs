@@ -33,7 +33,6 @@ defmodule GaleServer.UserControllerTest do
       expected = %{
         "error" => false,
         "payload" => %{
-          "id" => chris.id,
           "username" => chris.username,
           "name" => chris.name
         }

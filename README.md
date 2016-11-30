@@ -107,7 +107,6 @@ The client receives a success response if there exists a user with the given
   - `user`: JSON representation of the new user
      - `username`
      - `name`
-     - `id`
 
 On failure, the client receives a response whose payload contains the following
 field:
@@ -131,8 +130,18 @@ field:
 #### GET `/friendreq`
 Retrieves all of the user's friend requests.
 
-This request never fails. The `payload` will be an array with objects with the
+This request never fails. The `payload` will be an array of objects with the
 following schema:
   - `user`: Username of the request sender
   - `friend`: Username of the request recipient
   - `inserted_at`: ISO-8601 timestamp of when the request was made
+
+#### GET `/friend`
+Retrieves all of the user's friends.
+
+This request never fails. The `payload` will be an array of objects with the
+following schema:
+  - `username`
+  - `name`
+  - `inserted_at`: ISO-8601 timestamp of when the friend was added (the friend
+    request was accepted)

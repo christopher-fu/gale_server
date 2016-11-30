@@ -47,23 +47,33 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> get("/api/user/asdf")
         |> json_response(404)
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "No user with username asdf exists"
+        }
+      }
+      assert response == expected
     end
   end
 
   describe "send_friend_req/2" do
     test "sends friend request", %{
-      chris: chris, chris_jwt: chris_jwt
+      chris: chris, chris_jwt: chris_jwt, adam: adam
     } do
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
         |> post("/api/friendreq", %{username: "adam"})
         |> json_response(200)
-      chris_to_adam = Repo.get_by(FriendReq, user_id: chris.id)
+      chris_to_adam = Repo.get_by!(FriendReq, user_id: chris.id,
+        friend_id: adam.id)
       refute chris_to_adam == nil
-      refute response["error"]
-      assert Map.has_key?(response["payload"], "inserted_at")
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "inserted_at" => chris_to_adam.inserted_at
+        }
+      }
     end
 
     test "errors on nonexistent friend", %{chris_jwt: chris_jwt} do
@@ -71,8 +81,13 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> post("/api/friendreq", %{username: "asdf"})
         |> json_response(404)
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "No user with username asdf exists"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to send a duplicate outgoing friend request", %{
@@ -89,8 +104,14 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> post("/api/friendreq", %{username: adam.username})
         |> json_response(400)
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You have already sent a friend request to " <>
+            "#{adam.username}"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to send an outgoing friend request when there is
@@ -108,8 +129,14 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> post("/api/friendreq", %{username: adam.username})
         |> json_response(400)
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You already have a friend request from " <>
+            "#{adam.username}"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to send a friend request to an existing friend", %{
@@ -118,7 +145,7 @@ defmodule GaleServer.UserControllerTest do
       chris_jwt: chris_jwt
     } do
       %Friend{}
-      |> FriendReq.changeset(%{})
+      |> Friend.changeset(%{})
       |> Changeset.put_assoc(:user, chris)
       |> Changeset.put_assoc(:friend, adam)
       |> Repo.insert!()
@@ -126,8 +153,30 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> post("/api/friendreq", %{username: adam.username})
         |> json_response(400)
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You are already friends with #{adam.username}"
+        }
+      }
+      assert response == expected
+    end
+
+    test "errors when trying to send a friend request to yourself", %{
+      chris: chris,
+      chris_jwt: chris_jwt
+    } do
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> post("/api/friendreq", %{username: chris.username})
+        |> json_response(400)
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot send a friend request to yourself"
+        }
+      }
+      assert response == expected
     end
   end
 
@@ -190,8 +239,13 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> get("/api/friendreq/10")
         |> json_response(400)
-
-      assert response["error"]
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot access friend request id 10"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to get another user's friend request", %{
@@ -206,7 +260,13 @@ defmodule GaleServer.UserControllerTest do
         |> put_req_header("authorization", chris_jwt)
         |> get("/api/friendreq/#{friend_req.id}")
         |> json_response(400)
-      assert response["error"]
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot access friend request id #{friend_req.id}"
+        }
+      }
+      assert response == expected
     end
   end
 
@@ -298,8 +358,13 @@ defmodule GaleServer.UserControllerTest do
         |> json_response(400)
       assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot accept your own friend request"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to reject own friend request", %{
@@ -318,8 +383,13 @@ defmodule GaleServer.UserControllerTest do
         |> json_response(400)
       assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot reject your own friend request"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to cancel sender's friend request", %{
@@ -338,8 +408,13 @@ defmodule GaleServer.UserControllerTest do
         |> json_response(400)
       assert Repo.get_by(Friend, user_id: chris.id, friend_id: adam.id) == nil
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: chris.id) == nil
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot cancel a friend request that you didn't send"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to accept somebody else's friend request", %{
@@ -358,8 +433,13 @@ defmodule GaleServer.UserControllerTest do
         |> json_response(400)
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
       assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot access friend request id #{friend_req.id}"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to reject somebody else's friend request", %{
@@ -378,8 +458,13 @@ defmodule GaleServer.UserControllerTest do
         |> json_response(400)
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
       assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot access friend request id #{friend_req.id}"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when trying to cancel somebody else's friend request", %{
@@ -398,8 +483,13 @@ defmodule GaleServer.UserControllerTest do
         |> json_response(400)
       assert Repo.get_by(Friend, user_id: adam.id, friend_id: bob.id) == nil
       assert Repo.get_by(Friend, user_id: bob.id, friend_id: adam.id) == nil
-      assert response["error"]
-      assert Map.has_key?(response["payload"], "message")
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot access friend request id #{friend_req.id}"
+        }
+      }
+      assert response == expected
     end
   end
 

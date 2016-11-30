@@ -20,14 +20,37 @@ defmodule GaleServer.UnauthUserControllerTest do
       response = build_conn()
         |> post("/api/login", %{username: "chris", password: "pass"})
         |> json_response(400)
-      assert response["error"]
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "Login failed"
+        }
+      }
+      assert response == expected
     end
 
     test "errors when missing fields" do
       response = build_conn()
         |> post("/api/login", %{username: "chris"})
         |> json_response(400)
-      assert response["error"]
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "password is missing"
+        }
+      }
+      assert response == expected
+
+      response = build_conn()
+        |> post("/api/login", %{password: "pass"})
+        |> json_response(400)
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "username is missing"
+        }
+      }
+      assert response == expected
     end
   end
 

@@ -40,18 +40,11 @@ defmodule GaleServer.UserController do
   defp friend_req_exists?(user, friend_username) do
     case User.get_by_username(friend_username) do
       {:ok, friend} ->
-        outgoing_friend_req = Repo.one(from fr in FriendReq,
-          join: u1 in User, on: fr.user_id == u1.id,
-          join: u2 in User, on: fr.friend_id == u2.id,
-          where: fr.user_id == ^user.id and fr.friend_id == ^friend.id)
-        incoming_friend_req = Repo.one(from fr in FriendReq,
-          join: u1 in User, on: fr.user_id == u1.id,
-          join: u2 in User, on: fr.friend_id == u2.id,
-          where: fr.user_id == ^friend.id and fr.friend_id == ^user.id)
-        friend_rel = Repo.one(from f in Friend,
-          join: u1 in User, on: f.user_id == u1.id,
-          join: u2 in User, on: f.friend_id == u2.id,
-          where: f.user_id == ^user.id and f.friend_id == ^friend.id)
+        outgoing_friend_req = Repo.get_by(FriendReq, user_id: user.id,
+          friend_id: friend.id)
+        incoming_friend_req = Repo.get_by(FriendReq, user_id: friend.id,
+          friend_id: user.id)
+        friend_rel = Repo.get_by(Friend, user_id: user.id, friend_id: friend.id)
         cond do
           outgoing_friend_req != nil ->
             {:error, "You have already sent a friend request to #{friend_username}"}
@@ -133,7 +126,7 @@ defmodule GaleServer.UserController do
         where: (f.user_id == ^user.id or f.friend_id == ^user.id)
           and f.id == ^freq_id,
         preload: [:user, :friend]) do
-          nil -> {:error, 400, "You cannot access friend request id ${freq_id}"}
+          nil -> {:error, 400, "You cannot access friend request id #{freq_id}"}
           friend_req -> {:ok, friend_req}
         end),
       do: {:ok, friend_req}
@@ -165,7 +158,7 @@ defmodule GaleServer.UserController do
         join: u2 in User, on: f.friend_id == u2.id,
         where: (u1.id == ^user.id or u2.id == ^user.id) and f.id == ^freq_id,
         preload: [:user, :friend]) do
-          nil -> {:error, 400, "You cannot access friend request id ${freq_id}"}
+          nil -> {:error, 400, "You cannot access friend request id #{freq_id}"}
           friend_req -> {:ok, friend_req}
         end),
       {:ok} <-
@@ -184,8 +177,8 @@ defmodule GaleServer.UserController do
             end
           "cancel" ->
             if friend_req.friend.id == user.id do
-              {:error, 400, "You cannot cancel a friend request that you didn't
-                send"}
+              {:error, 400, "You cannot cancel a friend request that you " <>
+                "didn't send"}
             else
               {:ok}
             end

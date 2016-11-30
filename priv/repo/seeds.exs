@@ -16,18 +16,22 @@ alias Ecto.Changeset
 
 Repo.delete_all(FriendReq)
 Repo.delete_all(Friend)
-Repo.delete_all(Event)
 Repo.delete_all(AcceptedEventUser)
 Repo.delete_all(PendingEventUser)
 Repo.delete_all(RejectedEventUser)
+Repo.delete_all(Event)
 Repo.delete_all(User)
 
-chris = Repo.insert! User.changeset(%User{},
-  %{username: "chris", name: "chris", password: "pass"})
 adam = Repo.insert! User.changeset(%User{},
   %{username: "adam", name: "adam", password: "adampass"})
 bob = Repo.insert! User.changeset(%User{},
   %{username: "bob", name: "bob", password: "bobpass"})
+chris = Repo.insert! User.changeset(%User{},
+  %{username: "chris", name: "chris", password: "pass"})
+david = Repo.insert! User.changeset(%User{},
+  %{username: "david", name: "david", password: "davidpass"})
+david2 = Repo.insert! User.changeset(%User{},
+  %{username: "david2", name: "david", password: "davidpass"})
 Repo.insert! FriendReq.changeset(%FriendReq{},
   %{user_id: chris.id, friend_id: adam.id})
 Repo.insert! Friend.changeset(%Friend{},

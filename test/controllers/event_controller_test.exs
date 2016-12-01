@@ -427,6 +427,108 @@ defmodule GaleServer.EventControllerTest do
       }
       assert response == expected
     end
+
+    test "errors when trying to accept your own event",
+      %{chris: chris, chris_jwt: chris_jwt} do
+        time = Timex.now
+          |> Timex.set(microsecond: {0, 3})
+          |> Timex.shift(days: 5)
+        event = %Event{}
+          |> Event.changeset(%{owner_id: chris.id, description: "event 1", time: time})
+          |> Repo.insert!()
+        response = build_conn()
+          |> put_req_header("authorization", chris_jwt)
+          |> put("/api/event/#{event.id}", %{action: "accept"})
+          |> json_response(400)
+        expected = %{
+          "error" => true,
+          "payload" => %{"message" => "You cannot accept your own event"}
+        }
+        event = Repo.get!(Event, event.id)
+          |> Repo.preload([:owner, :accepted_invitees, :pending_invitees, :rejected_invitees])
+        assert not Enum.member?(Enum.map(event.accepted_invitees, &(&1.id)), chris.id)
+        assert not Enum.member?(Enum.map(event.pending_invitees, &(&1.id)), chris.id)
+        assert not Enum.member?(Enum.map(event.rejected_invitees, &(&1.id)), chris.id)
+        assert response == expected
+    end
+
+    test "errors when trying to reject your own event",
+      %{chris: chris, chris_jwt: chris_jwt} do
+        time = Timex.now
+          |> Timex.set(microsecond: {0, 3})
+          |> Timex.shift(days: 5)
+        event = %Event{}
+          |> Event.changeset(%{owner_id: chris.id, description: "event 1", time: time})
+          |> Repo.insert!()
+        response = build_conn()
+          |> put_req_header("authorization", chris_jwt)
+          |> put("/api/event/#{event.id}", %{action: "reject"})
+          |> json_response(400)
+        expected = %{
+          "error" => true,
+          "payload" => %{"message" => "You cannot reject your own event"}
+        }
+        event = Repo.get!(Event, event.id)
+          |> Repo.preload([:owner, :accepted_invitees, :pending_invitees, :rejected_invitees])
+        assert not Enum.member?(Enum.map(event.accepted_invitees, &(&1.id)), chris.id)
+        assert not Enum.member?(Enum.map(event.pending_invitees, &(&1.id)), chris.id)
+        assert not Enum.member?(Enum.map(event.rejected_invitees, &(&1.id)), chris.id)
+        assert response == expected
+    end
+
+    test "errors when trying to accept an event that you were not invited to",
+      %{adam: adam, bob: bob, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(days: 5)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{event_id: event.id, user_id: bob.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/event/#{event.id}", %{action: "accept"})
+        |> json_response(403)
+      expected = %{
+        "error" => true,
+        "payload" => %{"message" => "You cannot modify event id #{event.id}"}
+      }
+      event = Repo.get!(Event, event.id)
+        |> Repo.preload([:owner, :accepted_invitees, :pending_invitees, :rejected_invitees])
+      assert not Enum.member?(Enum.map(event.accepted_invitees, &(&1.id)), chris.id)
+      assert not Enum.member?(Enum.map(event.pending_invitees, &(&1.id)), chris.id)
+      assert not Enum.member?(Enum.map(event.rejected_invitees, &(&1.id)), chris.id)
+      assert response == expected
+    end
+
+    test "errors when trying to reject an event that you were not invited to",
+      %{adam: adam, bob: bob, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(days: 5)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{event_id: event.id, user_id: bob.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/event/#{event.id}", %{action: "reject"})
+        |> json_response(403)
+      expected = %{
+        "error" => true,
+        "payload" => %{"message" => "You cannot modify event id #{event.id}"}
+      }
+      event = Repo.get!(Event, event.id)
+        |> Repo.preload([:owner, :accepted_invitees, :pending_invitees, :rejected_invitees])
+      assert not Enum.member?(Enum.map(event.accepted_invitees, &(&1.id)), chris.id)
+      assert not Enum.member?(Enum.map(event.pending_invitees, &(&1.id)), chris.id)
+      assert not Enum.member?(Enum.map(event.rejected_invitees, &(&1.id)), chris.id)
+      assert response == expected
+    end
   end
 
   describe "delete_event/2" do
@@ -442,6 +544,27 @@ defmodule GaleServer.EventControllerTest do
         |> delete("/api/event/#{event.id}")
         |> json_response(200)
       expected = %{"error" => false}
+      assert response == expected
+    end
+
+    test "errors when trying to delete an event you do not own",
+      %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(days: 5)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> delete("/api/event/#{event.id}")
+        |> json_response(403)
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "Only the owner of an event can cancel it"
+        }
+      }
       assert response == expected
     end
   end

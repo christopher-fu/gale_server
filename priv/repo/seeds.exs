@@ -28,10 +28,10 @@ bob = Repo.insert! User.changeset(%User{},
   %{username: "bob", name: "bob", password: "bobpass"})
 chris = Repo.insert! User.changeset(%User{},
   %{username: "chris", name: "chris", password: "pass"})
-david = Repo.insert! User.changeset(%User{},
-  %{username: "david", name: "david", password: "davidpass"})
-david2 = Repo.insert! User.changeset(%User{},
-  %{username: "david2", name: "david", password: "davidpass"})
+dan = Repo.insert! User.changeset(%User{},
+  %{username: "dan", name: "dan", password: "danpass"})
+dan2 = Repo.insert! User.changeset(%User{},
+  %{username: "dan2", name: "dan", password: "danpass"})
 Repo.insert! FriendReq.changeset(%FriendReq{},
   %{user_id: chris.id, friend_id: adam.id})
 Repo.insert! Friend.changeset(%Friend{},
@@ -44,4 +44,6 @@ event = Repo.insert! Event.changeset(%Event{}, %{owner_id: chris.id,
 Repo.insert! AcceptedEventUser.changeset(%AcceptedEventUser{}, %{user_id: adam.id,
   event_id: event.id})
 Repo.insert! PendingEventUser.changeset(%PendingEventUser{}, %{user_id: bob.id,
+  event_id: event.id})
+Repo.insert! RejectedEventUser.changeset(%RejectedEventUser{}, %{user_id: dan.id,
   event_id: event.id})

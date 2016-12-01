@@ -17,7 +17,7 @@ defmodule GaleServer.User do
 
     many_to_many :accepted_events, Event, join_through: AcceptedEventUser
     many_to_many :pending_events, Event, join_through: PendingEventUser
-    many_to_many :rejected_eents, Event, join_through: RejectedEventUser
+    many_to_many :rejected_events, Event, join_through: RejectedEventUser
 
     timestamps()
   end

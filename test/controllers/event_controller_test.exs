@@ -2,7 +2,6 @@ defmodule GaleServer.EventControllerTest do
   use GaleServer.ConnCase, async: true
   alias GaleServer.{Repo, User, Friend, FriendReq, Event, AcceptedEventUser,
     PendingEventUser, RejectedEventUser}
-  alias Ecto.Changeset
   use Timex
 
   setup do
@@ -63,6 +62,83 @@ defmodule GaleServer.EventControllerTest do
       # Add adam as an accepted user
       %AcceptedEventUser{}
       |> AcceptedEventUser.changeset(%{user_id: adam.id, event_id: event.id})
+      |> Repo.insert!()
+      # Add bob as a pending user
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{user_id: bob.id, event_id: event.id})
+      |> Repo.insert!()
+      # Add dan as a rejected user
+      %RejectedEventUser{}
+      |> RejectedEventUser.changeset(%{user_id: dan.id, event_id: event.id})
+      |> Repo.insert!()
+
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> get("/api/event/#{event.id}")
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "id" => event.id,
+          "description" => event.description,
+          "owner" => chris.username,
+          "owner_name" => chris.name,
+          "time" => Timex.format!(event.time, "{ISO:Extended:Z}"),
+          "accepted_invitees" => [%{
+            "username" => adam.username,
+            "name" => adam.name
+          }],
+          "pending_invitees" => [%{
+            "username" => bob.username,
+            "name" => bob.name
+          }],
+          "rejected_invitees" => [%{
+            "username" => dan.username,
+            "name" => dan.name
+          }],
+        }
+      }
+    end
+
+    test "denies request if user is not owner or invited",
+      %{adam: adam, chris: chris, chris_jwt: chris_jwt, events: events} do
+      event = Enum.at(events, 1)
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> get("/api/event/#{event.id}")
+        |> json_response(403)
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "You cannot view event id #{event.id}"
+        }
+      }
+      assert response == expected
+
+      %AcceptedEventUser{}
+      |> AcceptedEventUser.changeset(%{user_id: chris.id, event_id: event.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> get("/api/event/#{event.id}")
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "id" => event.id,
+          "description" => event.description,
+          "owner" => adam.username,
+          "owner_name" => adam.name,
+          "time" => Timex.format!(event.time, "{ISO:Extended:Z}"),
+          "accepted_invitees" => [%{
+            "username" => chris.username,
+            "name" => chris.name
+          }],
+          "pending_invitees" => [],
+          "rejected_invitees" => [],
+        }
+      }
+      assert response == expected
     end
   end
 end

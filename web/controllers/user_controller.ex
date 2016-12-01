@@ -196,7 +196,7 @@ defmodule GaleServer.UserController do
           {:ok, friend_req} ->
             case action do
               "accept" ->
-                friend_req = %Friend{}
+                friend_rel = %Friend{}
                 |> Friend.changeset()
                 |> Changeset.put_assoc(:user, friend_req.user)
                 |> Changeset.put_assoc(:friend, friend_req.friend)
@@ -209,10 +209,9 @@ defmodule GaleServer.UserController do
                 conn
                 |> put_status(200)
                 |> render("ok.json", payload: %{
-                  id: friend_req.id,
-                  user: friend_req.user.username,
-                  friend: friend_req.friend.username,
-                  inserted_at: friend_req.inserted_at
+                  user: friend_rel.user.username,
+                  friend: friend_rel.friend.username,
+                  inserted_at: friend_rel.inserted_at
                 })
               "reject" ->
                 conn

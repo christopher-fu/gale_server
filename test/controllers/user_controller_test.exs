@@ -289,7 +289,6 @@ defmodule GaleServer.UserControllerTest do
       expected = %{
         "error" => false,
         "payload" => %{
-          "id" => friend_rel.id,
           "user" => chris.username,
           "friend" => adam.username,
           "inserted_at" => Timex.format!(friend_rel.inserted_at, "{ISO:Extended:Z}")

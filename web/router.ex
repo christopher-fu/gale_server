@@ -40,6 +40,7 @@ defmodule GaleServer.Router do
     post "/friendreq", UserController, :send_friend_req
     get "/friend", UserController, :get_friends
 
+    get "/event", EventController, :get_events
     get "/event/:id", EventController, :get_event
     post "/event", EventController, :make_event
   end

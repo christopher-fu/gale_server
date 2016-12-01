@@ -1,12 +1,13 @@
 defmodule GaleServer.EventController do
   use GaleServer.Web, :controller
-  alias GaleServer.{User, Friend, FriendReq, Event, PendingEventUser}
+  alias GaleServer.{User, Friend, FriendReq, Event, AcceptedEventUser,
+    PendingEventUser, RejectedEventUser}
   alias Ecto.Changeset
 
   plug :put_view, GaleServer.JsonView
   plug Guardian.Plug.EnsureAuthenticated, handler: GaleServer.AuthErrorHandler
 
-  defp event_to_json(event) do
+  def event_to_json(event) do
     event = Repo.preload(event,
       [:owner, :accepted_invitees, :pending_invitees, :rejected_invitees])
     %{
@@ -135,5 +136,34 @@ defmodule GaleServer.EventController do
     conn
     |> put_status(400)
     |> render("error.json", payload: %{message: "Invalid POST /event request"})
+  end
+
+  def get_events(conn, _params) do
+    user = Guardian.Plug.current_resource(conn)
+    owned_events = Repo.all(from ev in Event, where: ev.owner_id == ^user.id,
+      order_by: ev.time)
+    accepted_events = Repo.all(from ev in Event,
+      join: eu in AcceptedEventUser, on: ev.id == eu.event_id,
+      join: u in User, on: u.id == eu.user_id,
+      where: u.id == ^user.id,
+      order_by: ev.time)
+    pending_events = Repo.all(from ev in Event,
+      join: eu in PendingEventUser, on: ev.id == eu.event_id,
+      join: u in User, on: u.id == eu.user_id,
+      where: u.id == ^user.id,
+      order_by: ev.time)
+    rejected_events = Repo.all(from ev in Event,
+      join: eu in RejectedEventUser, on: ev.id == eu.event_id,
+      join: u in User, on: u.id == eu.user_id,
+      where: u.id == ^user.id,
+      order_by: ev.time)
+    conn
+    |> put_status(200)
+    |> render("ok.json", payload: %{
+      "owned_events": Enum.map(owned_events, &(event_to_json(&1))),
+      "accepted_events": Enum.map(accepted_events, &(event_to_json(&1))),
+      "pending_events": Enum.map(pending_events, &(event_to_json(&1))),
+      "rejected_events": Enum.map(rejected_events, &(event_to_json(&1)))
+    })
   end
 end

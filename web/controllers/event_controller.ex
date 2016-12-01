@@ -73,7 +73,9 @@ defmodule GaleServer.EventController do
         (case Timex.parse(time, "{ISO:Extended:Z}") do
           {:ok, time} ->
             {:ok, time}
-          {:error, err_msg} -> {:error, 400, err_msg}
+          {:error, err_msg} ->
+            {:error, 400, "time must a UTC time in ISO-8601 Z format with " <>
+              "dashes (YYYY-MM-DDThh:mm:ssZ)"}
         end),
       {:ok} <-
         # Check that all elements in invitees are strings

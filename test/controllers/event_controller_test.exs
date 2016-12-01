@@ -183,4 +183,25 @@ defmodule GaleServer.EventControllerTest do
       assert response == expected
     end
   end
+
+  test "errors when invalid time is given", %{chris_jwt: chris_jwt} do
+    time = Timex.now |> Timex.set(microsecond: {0, 3})
+    time_str = Timex.format!(time, "{ISO:Basic}")
+    post_body = %{
+      description: "An event!",
+      time: time_str,
+      invitees: []
+    }
+    response = build_conn()
+      |> put_req_header("authorization", chris_jwt)
+      |> post("/api/event", post_body)
+      |> json_response(400)
+    expected = %{
+      "error" => false,
+      "payload" => %{
+        "message": "time must a UTC time in ISO-8601 Z format with dashes " <>
+          "(YYYY-MM-DDThh:mm:ssZ)"
+      }
+    }
+  end
 end

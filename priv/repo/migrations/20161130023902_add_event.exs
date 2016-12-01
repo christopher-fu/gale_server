@@ -9,19 +9,19 @@ defmodule GaleServer.Repo.Migrations.AddEvent do
       timestamps()
     end
 
-    create table(:accepted_event_user) do
+    create table(:accepted_event_user, primary_key: false) do
       add :user_id, references(:users), primary_key: true
       add :event_id, references(:events), primary_key: true
       timestamps()
     end
 
-    create table(:pending_event_user) do
+    create table(:pending_event_user, primary_key: false) do
       add :user_id, references(:users), primary_key: true
       add :event_id, references(:events), primary_key: true
       timestamps()
     end
 
-    create table(:rejected_event_user) do
+    create table(:rejected_event_user, primary_key: false) do
       add :user_id, references(:users), primary_key: true
       add :event_id, references(:events), primary_key: true
       timestamps()

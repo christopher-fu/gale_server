@@ -29,6 +29,7 @@ defmodule GaleServer.AcceptedEventUser do
   use GaleServer.Web, :model
   alias GaleServer.{User, Event}
 
+  @primary_key false
   schema "accepted_event_user" do
     belongs_to :user, User
     belongs_to :event, Event
@@ -48,6 +49,7 @@ defmodule GaleServer.PendingEventUser do
   use GaleServer.Web, :model
   alias GaleServer.{User, Event}
 
+  @primary_key false
   schema "pending_event_user" do
     belongs_to :user, User
     belongs_to :event, Event
@@ -67,6 +69,7 @@ defmodule GaleServer.RejectedEventUser do
   use GaleServer.Web, :model
   alias GaleServer.{User, Event}
 
+  @primary_key false
   schema "rejected_event_user" do
     belongs_to :user, User
     belongs_to :event, Event

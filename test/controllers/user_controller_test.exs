@@ -1,5 +1,5 @@
 defmodule GaleServer.UserControllerTest do
-  use GaleServer.ConnCase, async: true
+  use GaleServer.ConnCase, async: false
   alias GaleServer.{Repo, User, Friend, FriendReq}
   alias Ecto.Changeset
 

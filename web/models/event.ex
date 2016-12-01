@@ -21,7 +21,7 @@ defmodule GaleServer.Event do
     struct
     |> cast(params, [:owner_id, :description, :time])
     |> validate_required([:owner_id, :time])
-    |> validate_length(:description, max: 256)
+    |> validate_length(:description, max: 1000)
   end
 end
 

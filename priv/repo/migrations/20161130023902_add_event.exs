@@ -4,7 +4,7 @@ defmodule GaleServer.Repo.Migrations.AddEvent do
   def change do
     create table(:events) do
       add :owner_id, references(:users)
-      add :description, :string, default: ""
+      add :description, :string, size: 1000, default: ""
       add :time, :datetime
       timestamps()
     end

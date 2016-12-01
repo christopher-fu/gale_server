@@ -69,10 +69,10 @@ POST fields is missing. The `payload` will contain one field:
 Creates a new user.
 
 The POST body must contain the following fields:
-  - `username`: Max length of 256 chars; must not contain whitespace
+  - `username`: Max length of 255 chars; must not contain whitespace
   - `password`
 The following fields are optional:
-  - `name` (default: `""`): Max length of 256 chars; must not contain whitespace
+  - `name` (default: `""`): Max length of 255 chars; must not contain whitespace
 
 The client receives a success response if the given `username` and `name` are
 valid and `username` has not been taken. The `payload` of the response will

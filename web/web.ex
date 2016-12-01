@@ -24,7 +24,7 @@ defmodule GaleServer.Web do
       import Ecto.Changeset
       import Ecto.Query
 
-      use Timex.Ecto.Timestamps, usec: true
+      use Timex.Ecto.Timestamps
     end
   end
 

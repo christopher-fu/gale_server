@@ -16,9 +16,11 @@ defmodule GaleServer.EventControllerTest do
 
     events = [
       Event.changeset(%Event{},
-        %{owner_id: chris.id, description: "event 1", time: Timex.now}),
+        %{owner_id: chris.id, description: "event 1",
+          time: Timex.now |> Timex.set(microsecond: {0, 3})}),
       Event.changeset(%Event{},
-        %{owner_id: adam.id, description: "event 2", time: Timex.now}),
+        %{owner_id: adam.id, description: "event 2",
+          time: Timex.now |> Timex.set(microsecond: {0, 3})}),
     ]
     |> Enum.map(&Repo.insert!(&1))
     |> Enum.map(&Repo.preload(&1,
@@ -136,6 +138,46 @@ defmodule GaleServer.EventControllerTest do
           }],
           "pending_invitees" => [],
           "rejected_invitees" => [],
+        }
+      }
+      assert response == expected
+    end
+  end
+
+  describe "make_event/2" do
+    test "makes an event", %{chris_jwt: chris_jwt, adam: adam, bob: bob, chris: chris} do
+      time = Timex.now |> Timex.set(microsecond: {0, 3})
+      time_str = Timex.format!(time, "{ISO:Extended:Z}")
+      post_body = %{
+        description: "An event!",
+        time: time_str,
+        invitees: [adam.username, bob.username]
+      }
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> post("/api/event", post_body)
+        |> json_response(200)
+      event = Repo.get_by!(Event, description: "An event!", time: time)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "id" => event.id,
+          "owner" => chris.username,
+          "owner_name" => chris.name,
+          "description" => "An event!",
+          "time" => time_str,
+          "accepted_invitees" => [],
+          "pending_invitees" => [
+            %{
+              "username" => adam.username,
+              "name" => adam.name
+            },
+            %{
+              "username" => bob.username,
+              "name" => bob.name
+            },
+          ],
+          "rejected_invitees" => []
         }
       }
       assert response == expected

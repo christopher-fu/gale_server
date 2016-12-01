@@ -31,7 +31,7 @@ defmodule GaleServer.User do
 
   @doc """
   Builds a changeset based on the `struct` and `params`.
-  :username and :name have a max length of 256. :username and :name must not
+  :username and :name have a max length of 255. :username and :name must not
   contain any whitespace.
   """
   def changeset(struct, params \\ %{}) do
@@ -47,8 +47,8 @@ defmodule GaleServer.User do
       |> validate_required([:username, :password])
       |> validate_format(:username, ~r/^\S+$/)  # No whitespace
       |> validate_format(:name, ~r/^\S+$/)      # No whitespace
-      |> validate_length(:username, max: 256)
-      |> validate_length(:name, max: 256)
+      |> validate_length(:username, max: 255)
+      |> validate_length(:name, max: 255)
       |> unique_constraint(:username)
       |> put_change(:password, Bcrypt.hashpwsalt(password))
     else
@@ -57,8 +57,8 @@ defmodule GaleServer.User do
       |> validate_required([:username, :password])
       |> validate_format(:username, ~r/^\S+$/)  # No whitespace
       |> validate_format(:name, ~r/^\S+$/)      # No whitespace
-      |> validate_length(:username, max: 256)
-      |> validate_length(:name, max: 256)
+      |> validate_length(:username, max: 255)
+      |> validate_length(:name, max: 255)
       |> unique_constraint(:username)
     end
 

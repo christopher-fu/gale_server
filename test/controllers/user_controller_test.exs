@@ -71,9 +71,11 @@ defmodule GaleServer.UserControllerTest do
       expected = %{
         "error" => false,
         "payload" => %{
-          "inserted_at" => chris_to_adam.inserted_at
+          "inserted_at" => Timex.format!(chris_to_adam.inserted_at, "{ISO:Extended:Z}")
         }
       }
+
+      assert response == expected
     end
 
     test "errors on nonexistent friend", %{chris_jwt: chris_jwt} do
@@ -486,6 +488,28 @@ defmodule GaleServer.UserControllerTest do
         "error" => true,
         "payload" => %{
           "message" => "You cannot access friend request id #{friend_req.id}"
+        }
+      }
+      assert response == expected
+    end
+
+    test "errors when action is not \"accept\", \"reject\", or \"cancel\"",
+      %{chris_jwt: chris_jwt, adam: adam, chris: chris} do
+      friend_req = %FriendReq{}
+        |> FriendReq.changeset()
+        |> Changeset.put_assoc(:user, chris)
+        |> Changeset.put_assoc(:friend, adam)
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/friendreq/#{friend_req.id}", %{
+          "action" => 123
+        })
+        |> json_response(400)
+      expected = %{
+        "error" => true,
+        "payload" => %{
+          "message" => "action must be \"accept\", \"reject\", or \"cancel\""
         }
       }
       assert response == expected

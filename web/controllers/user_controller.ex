@@ -234,8 +234,8 @@ defmodule GaleServer.UserController do
   def update_friend_req(conn, %{"freq_id" => _, "action" => _}) do
     conn
     |> put_status(400)
-    |> render("error.json", payload: %{message: "action must be \"accept\",
-      \"reject\", or \"cancel\""})
+    |> render("error.json", payload: %{message: "action must be \"accept\", " <>
+      "\"reject\", or \"cancel\""})
   end
 
   def update_friend_req(conn, %{"freq_id" => _}) do

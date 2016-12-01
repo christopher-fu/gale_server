@@ -14,13 +14,16 @@ alias GaleServer.{Repo, User, Friend, FriendReq, Event, AcceptedEventUser,
   PendingEventUser, RejectedEventUser}
 alias Ecto.Changeset
 
-Repo.delete_all(FriendReq)
-Repo.delete_all(Friend)
-Repo.delete_all(AcceptedEventUser)
-Repo.delete_all(PendingEventUser)
-Repo.delete_all(RejectedEventUser)
 Repo.delete_all(Event)
 Repo.delete_all(User)
+
+assert = fn (c) -> if not c do throw(c) end end
+
+assert.(length(Repo.all(Friend)) == 0)
+assert.(length(Repo.all(FriendReq)) == 0)
+assert.(length(Repo.all(AcceptedEventUser)) == 0)
+assert.(length(Repo.all(RejectedEventUser)) == 0)
+assert.(length(Repo.all(PendingEventUser)) == 0)
 
 adam = Repo.insert! User.changeset(%User{},
   %{username: "adam", name: "adam", password: "adampass"})

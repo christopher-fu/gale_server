@@ -140,22 +140,23 @@ defmodule GaleServer.EventController do
 
   def get_events(conn, _params) do
     user = Guardian.Plug.current_resource(conn)
-    owned_events = Repo.all(from ev in Event, where: ev.owner_id == ^user.id,
+    owned_events = Repo.all(from ev in Event,
+      where: ev.owner_id == ^user.id and ev.time >= from_now(0, "second"),
       order_by: ev.time)
     accepted_events = Repo.all(from ev in Event,
       join: eu in AcceptedEventUser, on: ev.id == eu.event_id,
       join: u in User, on: u.id == eu.user_id,
-      where: u.id == ^user.id,
+      where: u.id == ^user.id and ev.time >= from_now(0, "second"),
       order_by: ev.time)
     pending_events = Repo.all(from ev in Event,
       join: eu in PendingEventUser, on: ev.id == eu.event_id,
       join: u in User, on: u.id == eu.user_id,
-      where: u.id == ^user.id,
+      where: u.id == ^user.id  and ev.time >= from_now(0, "second"),
       order_by: ev.time)
     rejected_events = Repo.all(from ev in Event,
       join: eu in RejectedEventUser, on: ev.id == eu.event_id,
       join: u in User, on: u.id == eu.user_id,
-      where: u.id == ^user.id,
+      where: u.id == ^user.id and ev.time >= from_now(0, "second"),
       order_by: ev.time)
     conn
     |> put_status(200)
@@ -165,5 +166,104 @@ defmodule GaleServer.EventController do
       "pending_events": Enum.map(pending_events, &(event_to_json(&1))),
       "rejected_events": Enum.map(rejected_events, &(event_to_json(&1)))
     })
+  end
+
+  def update_event(conn, %{"id" => id, "action" => action})
+  when action == "accept" or action == "reject" do
+    user = Guardian.Plug.current_resource(conn)
+    valid = with {:ok, event} <-
+      (case Repo.get(Event, id)
+        |> Repo.preload([:owner, :accepted_invitees,
+                         :pending_invitees, :rejected_invitees]) do
+        nil -> {:error, 404, "No event with id #{id} exists"}
+        event -> {:ok, event}
+      end),
+      {:ok} <-
+        (can_view = event.owner_id == user.id or
+            Enum.member?(Enum.map(event.accepted_invitees, &(&1.id == user.id)), true) or
+            Enum.member?(Enum.map(event.pending_invitees, &(&1.id == user.id)), true) or
+            Enum.member?(Enum.map(event.rejected_invitees, &(&1.id == user.id)), true)
+        if can_view do
+          {:ok}
+        else
+          {:error, 403, "You cannot modify event id #{id}"}
+        end),
+      {:ok} <-
+        (if event.time < Timex.now do
+          {:error, 400, "You cannot modify events in the past"}
+        else
+          {:ok}
+        end),
+      {:ok} <-
+        (case action do
+          "accept" ->
+            if event.owner_id == user.id do
+              {:error, 400, "You cannot accept your own event"}
+            else
+              {:ok}
+            end
+          "reject" ->
+            if event.owner_id == user.id do
+              {:error, 400, "You cannot reject your own event"}
+            else
+              {:ok}
+            end
+        end),
+      do: {:ok, event}
+    case valid do
+      {:ok, event} ->
+        case action do
+          "accept" ->
+            Repo.delete_all(from eu in PendingEventUser,
+              where: eu.event_id == ^id and eu.user_id == ^user.id)
+            %AcceptedEventUser{}
+            |> AcceptedEventUser.changeset(%{event_id: id, user_id: user.id})
+            |> Repo.insert!()
+            event = Repo.get!(Event, event.id)
+            conn
+            |> put_status(200)
+            |> render("ok.json", payload: event_to_json(event))
+          "reject" ->
+            Repo.delete_all(from eu in PendingEventUser,
+              where: eu.event_id == ^id and eu.user_id == ^user.id)
+            %RejectedEventUser{}
+            |> RejectedEventUser.changeset(%{event_id: id, user_id: user.id})
+            |> Repo.insert!()
+            conn
+            |> put_status(200)
+            |> render("ok.json", payload: event_to_json(event))
+        end
+      {:error, err_status, err_msg} ->
+        conn
+        |> put_status(err_status)
+        |> render("error.json", payload: %{message: err_msg})
+    end
+  end
+
+  def delete_event(conn, %{"id" => id}) do
+    user = Guardian.Plug.current_resource(conn)
+    valid = with {:ok, event} <-
+      (case Repo.get(Event, id) do
+        nil -> {:error, 404, "No event with id #{id} exists"}
+        event -> {:ok, event}
+      end),
+      {:ok} <-
+        (if event.owner_id == user.id do
+          {:ok}
+        else
+          {:error, 403, "Only the owner of an event can cancel it"}
+        end),
+      do: {:ok, event}
+    case valid do
+      {:ok, event} ->
+        Repo.delete!(event)
+        conn
+        |> put_status(200)
+        |> render("ok.json")
+      {:error, err_status, err_msg} ->
+        conn
+        |> put_status(err_status)
+        |> render("error.json", payload: %{message: err_msg})
+    end
   end
 end

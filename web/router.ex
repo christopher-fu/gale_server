@@ -42,6 +42,8 @@ defmodule GaleServer.Router do
 
     get "/event", EventController, :get_events
     get "/event/:id", EventController, :get_event
+    put "/event/:id", EventController, :update_event
+    delete "/event/:id", EventController, :delete_event
     post "/event", EventController, :make_event
   end
 end

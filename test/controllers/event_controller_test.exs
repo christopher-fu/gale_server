@@ -4,6 +4,18 @@ defmodule GaleServer.EventControllerTest do
     PendingEventUser, RejectedEventUser, EventController}
   use Timex
 
+  defp map_keys_atom_to_string(map) do
+    map |> Enum.reduce(%{},
+      fn ({k, v}, acc) ->
+        v = cond do
+          is_map(v) -> map_keys_atom_to_string(v)
+          is_list(v) -> Enum.map(v, &(map_keys_atom_to_string(&1)))
+          true -> v
+        end
+        Map.put(acc, Atom.to_string(k), v)
+      end)
+  end
+
   setup do
     users = [
       User.changeset(%User{}, %{username: "adam", password: "adampass"}),
@@ -90,6 +102,7 @@ defmodule GaleServer.EventControllerTest do
           }],
         }
       }
+      assert response == expected
     end
 
     test "denies request if user is not owner or invited",
@@ -189,12 +202,13 @@ defmodule GaleServer.EventControllerTest do
         |> post("/api/event", post_body)
         |> json_response(400)
       expected = %{
-        "error" => false,
+        "error" => true,
         "payload" => %{
-          "message": "time must a UTC time in ISO-8601 Z format with dashes " <>
+          "message" => "time must a UTC time in ISO-8601 Z format with dashes " <>
             "(YYYY-MM-DDThh:mm:ssZ)"
         }
       }
+      assert response == expected
     end
   end
 
@@ -220,14 +234,15 @@ defmodule GaleServer.EventControllerTest do
         "error" => false,
         "payload" => %{
           "owned_events" => [
-            EventController.event_to_json(event2),
-            EventController.event_to_json(event1)
+            EventController.event_to_json(event2) |> map_keys_atom_to_string(),
+            EventController.event_to_json(event1) |> map_keys_atom_to_string()
           ],
           "accepted_events" => [],
           "pending_events" => [],
           "rejected_events" => []
         }
       }
+      assert response == expected
     end
 
     test "gets all accepted events",
@@ -259,13 +274,14 @@ defmodule GaleServer.EventControllerTest do
         "payload" => %{
           "owned_events" => [],
           "accepted_events" => [
-            EventController.event_to_json(event2),
-            EventController.event_to_json(event1)
+            EventController.event_to_json(event2) |> map_keys_atom_to_string(),
+            EventController.event_to_json(event1) |> map_keys_atom_to_string()
           ],
           "pending_events" => [],
           "rejected_events" => []
         }
       }
+      assert response == expected
     end
 
     test "gets all pending events",
@@ -298,12 +314,13 @@ defmodule GaleServer.EventControllerTest do
           "owned_events" => [],
           "accepted_events" => [],
           "pending_events" => [
-            EventController.event_to_json(event2),
-            EventController.event_to_json(event1)
+            EventController.event_to_json(event2) |> map_keys_atom_to_string(),
+            EventController.event_to_json(event1) |> map_keys_atom_to_string()
           ],
           "rejected_events" => []
         }
       }
+      assert response == expected
     end
 
     test "gets all rejected events",
@@ -337,11 +354,95 @@ defmodule GaleServer.EventControllerTest do
           "accepted_events" => [],
           "pending_events" => [],
           "rejected_events" => [
-            EventController.event_to_json(event2),
-            EventController.event_to_json(event1)
+            EventController.event_to_json(event2) |> map_keys_atom_to_string(),
+            EventController.event_to_json(event1) |> map_keys_atom_to_string()
           ],
         }
       }
+      assert response == expected
+    end
+  end
+
+  describe "update_event/2" do
+    test "accepts events", %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(days: 5)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{event_id: event.id, user_id: chris.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/event/#{event.id}", %{action: "accept"})
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "id" => event.id,
+          "owner" => adam.username,
+          "owner_name" => adam.name,
+          "description" => event.description,
+          "time" => Timex.format!(time, "{ISO:Extended:Z}"),
+          "accepted_invitees" => [
+            %{"username" => chris.username, "name" => chris.name}
+          ],
+          "pending_invitees" => [],
+          "rejected_invitees" => []
+        }
+      }
+      assert response == expected
+    end
+
+    test "rejects events", %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(days: 5)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{event_id: event.id, user_id: chris.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/event/#{event.id}", %{action: "reject"})
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "id" => event.id,
+          "owner" => adam.username,
+          "owner_name" => adam.name,
+          "description" => event.description,
+          "time" => Timex.format!(time, "{ISO:Extended:Z}"),
+          "accepted_invitees" => [],
+          "pending_invitees" => [],
+          "rejected_invitees" => [
+            %{"username" => chris.username, "name" => chris.name}
+          ]
+        }
+      }
+      assert response == expected
+    end
+  end
+
+  describe "delete_event/2" do
+    test "deletes events", %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(days: 5)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: chris.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> delete("/api/event/#{event.id}")
+        |> json_response(200)
+      expected = %{"error" => false}
+      assert response == expected
     end
   end
 end

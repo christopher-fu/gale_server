@@ -283,7 +283,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", adam_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "accept"
         })
         |> json_response(200)
@@ -311,7 +311,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", adam_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "reject"
         })
         |> json_response(200)
@@ -332,7 +332,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "cancel"
         })
         |> json_response(200)
@@ -353,7 +353,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "accept"
         })
         |> json_response(400)
@@ -378,7 +378,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "reject"
         })
         |> json_response(400)
@@ -403,7 +403,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", adam_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "cancel"
         })
         |> json_response(400)
@@ -428,7 +428,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "accept"
         })
         |> json_response(400)
@@ -453,7 +453,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "reject"
         })
         |> json_response(400)
@@ -478,7 +478,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => "cancel"
         })
         |> json_response(400)
@@ -502,7 +502,7 @@ defmodule GaleServer.UserControllerTest do
         |> Repo.insert!()
       response = build_conn()
         |> put_req_header("authorization", chris_jwt)
-        |> put("/api/friendreq/#{friend_req.id}", %{
+        |> delete("/api/friendreq/#{friend_req.id}", %{
           "action" => 123
         })
         |> json_response(400)

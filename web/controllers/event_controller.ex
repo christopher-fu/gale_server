@@ -229,6 +229,7 @@ defmodule GaleServer.EventController do
             %RejectedEventUser{}
             |> RejectedEventUser.changeset(%{event_id: id, user_id: user.id})
             |> Repo.insert!()
+            event = Repo.get!(Event, event.id)
             conn
             |> put_status(200)
             |> render("ok.json", payload: event_to_json(event))

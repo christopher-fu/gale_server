@@ -186,7 +186,7 @@ The success response payload has the following schema:
 An `event` has the following schema:
   - `id`
   - `description`
-  - `time`: ISO-8601 Z timestamp (YYYY-MM-DDThh:mm:ssZ) of when the event will
+  - `time`: ISO-8601 Z timestamp (`YYYY-MM-DDThh:mm:ssZ`) of when the event will
     occur
   - `owner`: Username of the owner
   - `owner_name`
@@ -207,18 +207,18 @@ Gets an event by id. Users may only get events that they own or have been
 invited to.
 
 The success response payload is the requested event. The event has the schema
-described in GET `/event`.
+described in [GET `/event`](#get-event).
 
 #### POST `event`
 Creates a new event.
 
 The post body must contain the following fields:
   - `description`: Maximum of 1000 characters
-  - `time`: ISO-8601 Z timestamp (YYYY-MM-DDThh:mm:ssZ). Must be in the future.
+  - `time`: ISO-8601 Z timestamp (`YYYY-MM-DDThh:mm:ssZ`). Must be in the future.
   - `invitees`: An array of usernames to invite
 
 The success response payload will be the event, which follows the schema
-described in GET `/event`
+described in [GET `/event`](#get-event).
 
 #### PUT `/event/:id`
 Responds to an event invitation. Only users who have been invited to an event
@@ -228,7 +228,7 @@ The request body must contain an `action` field, which must either be `accept`
 or `reject`.
 
 The success payload is the event that was responded to. The event has the schema
-described in GET `/event`.
+described in [GET `/event`](#get-event).
 
 #### DELETE `/event/:id`
 Cancels an event. Only the event owner can cancel the event. When canceled, the

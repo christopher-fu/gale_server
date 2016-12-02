@@ -112,6 +112,24 @@ On failure, the client receives a response whose payload contains the following
 field:
   - `message`: An error message
 
+#### GET `/friendreq`
+Retrieves all of the user's friend requests.
+
+This request never fails. The `payload` will be an array of objects with the
+following schema:
+  - `user`: Username of the request sender
+  - `friend`: Username of the request recipient
+  - `inserted_at`: ISO-8601 timestamp of when the request was made
+
+#### GET `/friendreq/:id`
+Gets a friend request by id.
+
+If successful, returns a response with a payload with the following schema:
+  - `id`: Friend request id
+  - `user`: Username of sender
+  - `friend`: Username of recipient
+  - `inserted_at`: When the friend request was made
+
 #### POST `/friendreq`
 Sends a friend request.
 
@@ -127,14 +145,22 @@ On failure, the client receives a response whose payload contains the following
 field:
   - `message`: An error message
 
-#### GET `/friendreq`
-Retrieves all of the user's friend requests.
 
-This request never fails. The `payload` will be an array of objects with the
-following schema:
-  - `user`: Username of the request sender
-  - `friend`: Username of the request recipient
-  - `inserted_at`: ISO-8601 timestamp of when the request was made
+#### DELETE `/friendreq`
+Responds to a friend request. The client must pass a request body with an
+`action` field. `action` can be one of the following values:
+  - `accept`: Can only be passed by the recipient of the friend request
+  - `reject`: Can only be passed by the recipient of the friend request
+  - `cancel`: Can only be passed by the sender of the friend request
+
+If the action was `accept`, the success response payload has the following
+schema:
+  - `user`: Original sender of the friend request
+  - `friend`: Original recipient of the friend request
+  - `inserted_at`: When the friend request was accepted
+
+If the action was `reject` or `cancel`, the success response will not have a
+payload.
 
 #### GET `/friend`
 Retrieves all of the user's friends.
@@ -145,3 +171,67 @@ following schema:
   - `name`
   - `inserted_at`: ISO-8601 timestamp of when the friend was added (the friend
     request was accepted)
+
+#### GET `/event`
+Gets a list of the users events. Only events that have not yet occurred are
+returned.
+
+The success response payload has the following schema:
+  - `owned_events`: Array of events that the user owns
+  - `accepted_events`: Array of events that the user has accepted
+  - `pending_events`: Array of events that the user has been invited to but not
+    yet responded to
+  - `rejected_events`: Array of events that the user has rejected
+
+An `event` has the following schema:
+  - `id`
+  - `description`
+  - `time`: ISO-8601 Z timestamp (YYYY-MM-DDThh:mm:ssZ) of when the event will
+    occur
+  - `owner`: Username of the owner
+  - `owner_name`
+  - `accepted_invitees`: Array of users who have accepted the event, sorted by
+    username
+  - `pending_invitees`: Array of users who have been invited to the event but
+    have not yet accepted or rejected the invitation, sorted by username
+  - `rejected_invitees`: Array of users who have rejected the event, sorted by
+    username
+
+A `user` in the `accepted_invitees`, `pending_invitees`, and `rejected_invitees`
+fields has the following schema:
+  - `username`
+  - `name`
+
+#### GET `/event/:id`
+Gets an event by id. Users may only get events that they own or have been
+invited to.
+
+The success response payload is the requested event. The event has the schema
+described in GET `/event`.
+
+#### POST `event`
+Creates a new event.
+
+The post body must contain the following fields:
+  - `description`: Maximum of 1000 characters
+  - `time`: ISO-8601 Z timestamp (YYYY-MM-DDThh:mm:ssZ). Must be in the future.
+  - `invitees`: An array of usernames to invite
+
+The success response payload will be the event, which follows the schema
+described in GET `/event`
+
+#### PUT `/event/:id`
+Responds to an event invitation. Only users who have been invited to an event
+can respond to the invitation. The event owner cannot respond to his own event.
+
+The request body must contain an `action` field, which must either be `accept`
+or `reject`.
+
+The success payload is the event that was responded to. The event has the schema
+described in GET `/event`.
+
+#### DELETE `/event/:id`
+Cancels an event. Only the event owner can cancel the event. When canceled, the
+event is deleted and will no longer show up in any other requests.
+
+The success response has no payload.

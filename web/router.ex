@@ -36,14 +36,14 @@ defmodule GaleServer.Router do
     get "/user/:username", UserController, :get_user
     get "/friendreq", UserController, :get_friend_reqs
     get "/friendreq/:freq_id", UserController, :get_friend_req
-    delete "/friendreq/:freq_id", UserController, :update_friend_req
     post "/friendreq", UserController, :send_friend_req
+    delete "/friendreq/:freq_id", UserController, :update_friend_req
     get "/friend", UserController, :get_friends
 
     get "/event", EventController, :get_events
     get "/event/:id", EventController, :get_event
+    post "/event", EventController, :make_event
     put "/event/:id", EventController, :update_event
     delete "/event/:id", EventController, :delete_event
-    post "/event", EventController, :make_event
   end
 end

@@ -562,6 +562,33 @@ defmodule GaleServer.EventControllerTest do
       assert not Enum.member?(Enum.map(event.rejected_invitees, &(&1.id)), chris.id)
       assert response == expected
     end
+
+    test "errors when trying to accept an event occurs in the past",
+      %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(seconds: -3)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{event_id: event.id, user_id: chris.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/event/#{event.id}", %{action: "accept"})
+        |> json_response(400)
+      expected = %{
+        "error" => true,
+        "payload" => %{"message" => "You cannot modify events in the past"}
+      }
+      event = Repo.get!(Event, event.id)
+        |> Repo.preload([:owner, :accepted_invitees, :pending_invitees, :rejected_invitees])
+      assert not Enum.member?(Enum.map(event.accepted_invitees, &(&1.id)), chris.id)
+      assert Enum.member?(Enum.map(event.pending_invitees, &(&1.id)), chris.id)
+      assert not Enum.member?(Enum.map(event.rejected_invitees, &(&1.id)), chris.id)
+      assert response == expected
+    end
   end
 
   describe "delete_event/2" do

@@ -189,7 +189,7 @@ defmodule GaleServer.EventController do
           {:error, 403, "You cannot modify event id #{id}"}
         end),
       {:ok} <-
-        (if event.time < Timex.now do
+        (if Timex.compare(event.time, Timex.now) < 0 do
           {:error, 400, "You cannot modify events in the past"}
         else
           {:ok}

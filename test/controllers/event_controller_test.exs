@@ -396,6 +396,39 @@ defmodule GaleServer.EventControllerTest do
       assert response == expected
     end
 
+    test "accepts events in the near future",
+      %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
+      time = Timex.now
+        |> Timex.set(microsecond: {0, 3})
+        |> Timex.shift(seconds: 3)
+      event = %Event{}
+        |> Event.changeset(%{owner_id: adam.id, description: "event 1", time: time})
+        |> Repo.insert!()
+      %PendingEventUser{}
+      |> PendingEventUser.changeset(%{event_id: event.id, user_id: chris.id})
+      |> Repo.insert!()
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> put("/api/event/#{event.id}", %{action: "accept"})
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "id" => event.id,
+          "owner" => adam.username,
+          "owner_name" => adam.name,
+          "description" => event.description,
+          "time" => Timex.format!(time, "{ISO:Extended:Z}"),
+          "accepted_invitees" => [
+            %{"username" => chris.username, "name" => chris.name}
+          ],
+          "pending_invitees" => [],
+          "rejected_invitees" => []
+        }
+      }
+      assert response == expected
+    end
+
     test "rejects events", %{adam: adam, chris: chris, chris_jwt: chris_jwt} do
       time = Timex.now
         |> Timex.set(microsecond: {0, 3})

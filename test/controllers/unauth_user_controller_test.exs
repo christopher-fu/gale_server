@@ -62,18 +62,15 @@ defmodule GaleServer.UnauthUserControllerTest do
 
       chris = Repo.get_by!(User, username: "chris")
 
-      expected = %{
-        "error" => false,
-        "payload" => %{
-          "user" => %{
-            "id" => chris.id,
-            "username" => chris.username,
-            "name" => chris.name
-          }
-        }
+      expected_user = %{
+        "id" => chris.id,
+        "username" => chris.username,
+        "name" => chris.name
       }
 
-      assert response == expected
+      assert response["payload"]["user"] == expected_user
+      assert Map.has_key?(response["payload"], "jwt")
+      assert Map.has_key?(response["payload"], "exp")
       assert chris.username == "chris" and Bcrypt.checkpw("pass", chris.password)
     end
 
@@ -84,18 +81,15 @@ defmodule GaleServer.UnauthUserControllerTest do
 
       chris = Repo.get_by!(User, username: "chris")
 
-      expected = %{
-        "error" => false,
-        "payload" => %{
-          "user" => %{
-            "id" => chris.id,
-            "username" => chris.username,
-            "name" => chris.name
-          }
-        }
+      expected_user = %{
+        "id" => chris.id,
+        "username" => chris.username,
+        "name" => chris.name
       }
 
-      assert response == expected
+      assert response["payload"]["user"] == expected_user
+      assert Map.has_key?(response["payload"], "jwt")
+      assert Map.has_key?(response["payload"], "exp")
       assert chris.username == "chris" and chris.name == "chris" and
         Bcrypt.checkpw("pass", chris.password)
     end

@@ -1,15 +1,53 @@
 # GaleServer
+The backend for Gale. We currently have an
+[iOS client](https://github.com/almighty-ken/iOS_gale) in development.
 
-See [`docs/project_description.md`](docs/project_description.md) for a brief
-description of the aims of Gale.
+## Table of contents
+1. [Setting up](#setting-up)
+  1. [Installing Elixir and Phoenix](#installing-elixir-and-phoenix)
+  2. [Postgres](#postgres)
+  3. [Phoenix](#phoenix)
+2. [API documentation](#api-documentation)
+  1. [Unauthorized routes](#unauthorized-routes)
+    1. [POST `/login`](#post-login)
+    2. [POST `/user`](#post-user)
+  2. [Authorized routes](#authorized-routes)
+    1. [GET `/user/:username`](#get-userusername)
+    2. [GET `/friendreq`](#get-friendreq)
+    3. [GET `/friendreq/:id`](#get-friendreqid)
+    4. [POST `/friendreq`](#post-friendreq)
+    5. [DELETE `/friendreq`](#delete-friendreq)
+    6. [GET `/friend`](#get-friend)
+    7. [GET `/event`](#get-event)
+    8. [GET `/event/:id`](#get-eventid)
+    9. [POST `/event`](#post-event)
+    10. [PUT `/event/:id`](#put-eventid)
+    11. [DELETE `/event/:id`](#delete-eventid)
 
-## Setting up Postgres
+See [`docs/project_description.md`](docs/project_description.md) for our project
+description.
+
+## Setting up
+### Installing Elixir and Phoenix
+Gale is written in Elixir and uses Phoenix. If you use homebrew, you can use the
+following commands to install Elixir and Phoenix.
+
+```bash
+brew install elixir
+mix local.hex
+mix archive.install https://github.com/phoenixframework/archives/raw/master/phoenix_new.ez
+```
+
+For more information, see http://elixir-lang.org/install.html and
+http://www.phoenixframework.org/docs/installation.
+
+### Postgres
 [Postgres.app](http://postgresapp.com/) is the easiest way to get Postgres on
 macOS. Just download the app and open it. To use the command line tools that
 come with `Postgres.app`, follow the instructions
 [here](http://postgresapp.com/documentation/cli-tools.html).
 
-## Starting Phoenix
+### Phoenix
   - Install dependencies with `mix deps.get`
   - Create and migrate your database with `mix ecto.create && mix ecto.migrate`
   - Start Phoenix endpoint with `mix phoenix.server`
@@ -212,7 +250,7 @@ invited to.
 The success response payload is the requested event. The event has the schema
 described in [GET `/event`](#get-event).
 
-#### POST `event`
+#### POST `/event`
 Creates a new event.
 
 The post body must contain the following fields:

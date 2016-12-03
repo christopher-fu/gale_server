@@ -30,7 +30,7 @@ Gale currently consists of two parts: the backend (uses Phoenix, a web framework
 written in Elixir; backed by Postgres) by Postgres, and the frontend (an iOS
 app).
 
-Gale users Ecto as a DB abstraction layer. Ecto allows use to define schemas for
+Gale uses Ecto as a DB abstraction layer. Ecto allows use to define schemas for
 our models, which then defines the kinds of queries and actions we can perform
 with those models. Take, for example, the definition of the `Event` model:
 

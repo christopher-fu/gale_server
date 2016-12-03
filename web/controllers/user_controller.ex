@@ -1,6 +1,7 @@
 defmodule GaleServer.UserController do
   use GaleServer.Web, :controller
-  alias GaleServer.{User, Friend, FriendReq, Event}
+  alias GaleServer.{User, Friend, FriendReq, Event, AcceptedEventUser,
+    PendingEventUser, RejectedEventUser, EventController}
   alias Ecto.Changeset
 
   plug :put_view, GaleServer.JsonView
@@ -16,22 +17,46 @@ defmodule GaleServer.UserController do
         })
       {:ok, requested_user} ->
         if user.id == requested_user.id do
-          owned_events = Repo.all(from e in Event, where: e.owner_id == ^user.id)
-          # pending_events = Repo.all(for ev in Event, join: eu in EventUser, )
-
-          # FIXME
+          owned_events = Repo.all(from ev in Event,
+            where: ev.owner_id == ^user.id and ev.time >= from_now(0, "second"),
+            order_by: ev.time)
+          accepted_events = Repo.all(from ev in Event,
+            join: eu in AcceptedEventUser, on: ev.id == eu.event_id,
+            join: u in User, on: u.id == eu.user_id,
+            where: u.id == ^user.id and ev.time >= from_now(0, "second"),
+            order_by: ev.time)
+          pending_events = Repo.all(from ev in Event,
+            join: eu in PendingEventUser, on: ev.id == eu.event_id,
+            join: u in User, on: u.id == eu.user_id,
+            where: u.id == ^user.id and ev.time >= from_now(0, "second"),
+            order_by: ev.time)
+          rejected_events = Repo.all(from ev in Event,
+            join: eu in RejectedEventUser, on: ev.id == eu.event_id,
+            join: u in User, on: u.id == eu.user_id,
+            where: u.id == ^user.id and ev.time >= from_now(0, "second"),
+            order_by: ev.time)
+          friends = Repo.all(from f in Friend,
+            join: u in User, on: u.id == f.user_id,
+            join: uf in User, on: uf.id == f.friend_id,
+            where: u.id == ^user.id,
+            order_by: uf.username)
           conn
           |> put_status(200)
           |> render("ok.json", payload: %{
             username: user.username,
             name: user.name,
+            owned_events: Enum.map(owned_events, &(EventController.event_to_json(&1))),
+            accepted_events: Enum.map(accepted_events, &(EventController.event_to_json(&1))),
+            pending_events: Enum.map(pending_events, &(EventController.event_to_json(&1))),
+            rejected_events: Enum.map(rejected_events, &(EventController.event_to_json(&1))),
+            friends: Enum.map(friends, &(%{username: &1.username, name: &1.name}))
           })
         else
           conn
           |> put_status(200)
           |> render("ok.json", payload: %{
-            username: user.username,
-            name: user.name,
+            username: requested_user.username,
+            name: requested_user.name,
           })
         end
     end

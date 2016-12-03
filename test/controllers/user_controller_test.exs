@@ -23,7 +23,25 @@ defmodule GaleServer.UserControllerTest do
   end
 
   describe "get_user/2" do
-    test "responds with the requested user", %{
+    test "responds with the user's info", %{
+      adam: adam, chris_jwt: chris_jwt
+    } do
+      response = build_conn()
+        |> put_req_header("authorization", chris_jwt)
+        |> get("/api/user/adam")
+        |> json_response(200)
+      expected = %{
+        "error" => false,
+        "payload" => %{
+          "username" => adam.username,
+          "name" => adam.name
+        }
+      }
+
+      assert response == expected
+    end
+
+    test "responds with all of the user's info if the user is requesting himself", %{
       chris: chris, chris_jwt: chris_jwt
     } do
       response = build_conn()
@@ -34,7 +52,12 @@ defmodule GaleServer.UserControllerTest do
         "error" => false,
         "payload" => %{
           "username" => chris.username,
-          "name" => chris.name
+          "name" => chris.name,
+          "friends" => [],
+          "owned_events" => [],
+          "accepted_events" => [],
+          "pending_events" => [],
+          "rejected_events" => []
         }
       }
 

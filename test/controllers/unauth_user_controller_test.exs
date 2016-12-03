@@ -63,7 +63,6 @@ defmodule GaleServer.UnauthUserControllerTest do
       chris = Repo.get_by!(User, username: "chris")
 
       expected_user = %{
-        "id" => chris.id,
         "username" => chris.username,
         "name" => chris.name
       }
@@ -82,7 +81,6 @@ defmodule GaleServer.UnauthUserControllerTest do
       chris = Repo.get_by!(User, username: "chris")
 
       expected_user = %{
-        "id" => chris.id,
         "username" => chris.username,
         "name" => chris.name
       }

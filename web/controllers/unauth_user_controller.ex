@@ -74,7 +74,6 @@ defmodule GaleServer.UnauthUserController do
             |> put_status(201)
             |> render("ok.json", payload: %{
               user: %{
-               id: user.id,
                username: user.username,
                name: user.name
               },

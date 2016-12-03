@@ -1,6 +1,8 @@
 # GaleServer
 The backend for Gale. We currently have an
-[iOS client](https://github.com/almighty-ken/iOS_gale) in development.
+[iOS client](https://github.com/almighty-ken/iOS_gale) in development. Made by
+[Christopher Fu](https://github.com/chrisf1337) (netid: cf449) and
+[Ken Cheng](https://github.com/almighty-ken) (netid: ...)
 
 ## Table of contents
 1. [Setting up](#setting-up)
@@ -158,6 +160,7 @@ Retrieves all of the user's friend requests.
 
 This request never fails. The `payload` will be an array of objects with the
 following schema:
+  - `id`
   - `user`: Username of the request sender
   - `friend`: Username of the request recipient
   - `inserted_at`: ISO-8601 timestamp of when the request was made
@@ -180,6 +183,9 @@ The POST body must contain the following field:
 The client receives a success response if the username corresponds to an
 existing user and there does not already exist a friend relation (pending or
 accepted) between the two users. The`payload` will contain the following fields:
+  - `id`
+  - `user`: Username of sender
+  - `friend`: Username of recipient
   - `inserted_at`: The time at which the friend request was made
 
 On failure, the client receives a response whose payload contains the following
@@ -187,7 +193,7 @@ field:
   - `message`: An error message
 
 
-#### DELETE `/friendreq`
+#### DELETE `/friendreq/:id`
 Responds to a friend request. The client must pass a request body with an
 `action` field. `action` can be one of the following values:
   - `accept`: Can only be passed by the recipient of the friend request

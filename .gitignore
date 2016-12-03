@@ -24,3 +24,14 @@ erl_crash.dump
 /config/prod.secret.exs
 
 *.DS_Store
+
+# LaTeX
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.aux
+*.nav
+*.toc
+*.out
+*.snm

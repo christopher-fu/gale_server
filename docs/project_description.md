@@ -17,13 +17,13 @@ message to that group. This is inconvenient for a few reasons:
     schedules.
 
 Gale tries to solve this by allowing an event creator to specify where and when
-he will go at a certain time. The event invite is then sent out to invitees, who
-must immediately respond to the invite with a simple tap. Event creators can
-choose who to invite from a list of friends. This way, there is no quibbling
-about the time and place: it is set in stone beforehand, and the event owner
-cannot change it after the event is made. Gale handles the invitation process
-for the user so he does not have to track each invitee down. Invitees who
-decline an invitation will not receive any more notifications about it.
+he will go. The event invite is then sent out to invitees, who must immediately
+respond to the invite with a simple tap. Event creators can choose who to invite
+from a list of friends. This way, there is no quibbling about the time and
+place: it is set in stone beforehand, and the event owner cannot change it after
+the event is made. Gale handles the invitation process for the user so he does
+not have to track each invitee down. Invitees who decline an invitation will not
+receive any more notifications about it.
 
 ## Technical details
 Gale currently consists of two parts: the backend (uses Phoenix, a web framework

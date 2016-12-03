@@ -55,6 +55,8 @@ three different join tables.
 
 An ER diagram of Gale's entity model is shown below:
 
+![gale-er](gale-er.png)
+
 ## Application of concepts learned in class
 - SQL queries
 - Normalization

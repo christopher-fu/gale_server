@@ -1,5 +1,8 @@
 # GaleServer
 
+See [`docs/project_description.md`](docs/project_description.md) for a brief
+description of the aims of Gale.
+
 ## Setting up Postgres
 [Postgres.app](http://postgresapp.com/) is the easiest way to get Postgres on
 macOS. Just download the app and open it. To use the command line tools that

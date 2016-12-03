@@ -114,7 +114,12 @@ defmodule GaleServer.UserController do
           |> Repo.insert!()
         conn
         |> put_status(200)
-        |> render("ok.json", payload: %{inserted_at: friend_req.inserted_at})
+        |> render("ok.json", payload: %{
+          id: friend_req.id,
+          user: friend_req.user.username,
+          friend: friend_req.friend.username,
+          inserted_at: friend_req.inserted_at
+        })
     end
   end
 

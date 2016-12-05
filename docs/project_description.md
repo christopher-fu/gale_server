@@ -11,7 +11,7 @@ A simple event scheduling app for busy people with changing schedules. Made by
 5. [Who did what](#who-did-what)
 6. [Difficulties](#difficulties)
   1. [Backend](#backend)
-  2. [Frontend](#frontend)
+  ii. [Frontend](#frontend)
 7. [Other selling points](#other-selling-points)
 8. [Future work](#future-work)
 

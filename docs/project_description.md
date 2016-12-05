@@ -385,12 +385,12 @@ want to make sure our users never ignore the invitation, and leave the event
 host pending on the response. The app also supports friend management and event
 reminders as notifications before the event starts.
 
-![story_board](story_board.png)
-![launch](launch.png)
-![signup](signup.png)
-![login](login.png)
-![friend](friend.png)
-![create-event](create_event.png)
+<img src="story_board.png" width="282" height="360">
+<img src="launch.png" width="193" height="340">
+<img src="signup.png" width="193" height="340">
+<img src="login.png" width="193" height="340">
+<img src="friend.png" width="193" height="340">
+<img src="create_event.png" width="193" height="340">
 
 ## Application of concepts learned in class
 - SQL queries

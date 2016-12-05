@@ -1,17 +1,19 @@
 # Gale
 A simple event scheduling app for busy people with changing schedules. Made by
 [Christopher Fu](https://github.com/chrisf1337) (netid: cf449) and
-[Ken Cheng](https://github.com/almighty-ken) (netid: kc792)
+[Ken Cheng](https://github.com/almighty-ken) (netid: kc792).
 
 ## Table of contents
 1. [Introduction](#introduction)
 2. [Example usage](#example-usage)
+  1. [Frontend](#frontend)
+  2. [Backend](#backend)
 3. [Technical details](#technical-details)
 4. [Application of concepts used in class](#application-of-concepts-learned-in-class)
 5. [Who did what](#who-did-what)
 6. [Difficulties](#difficulties)
-  1. [Backend](#backend)
-  ii. [Frontend](#frontend)
+  1. [Backend](#backend-1)
+  2. [Frontend](#frontend-1)
 7. [Other selling points](#other-selling-points)
 8. [Future work](#future-work)
 
@@ -47,6 +49,7 @@ invitee down. Invitees who decline an invitation will not receive any more
 notifications about it.
 
 ## Example usage
+### Backend
 See the [README](README.md) for a complete description of all the current
 implemented API endpoints.
 
@@ -344,6 +347,16 @@ Authorization: JWT omitted for clarity
 chris has been moved from the pending invitees list to the accepted invitees
 list. You can verify that adam sees this change as well.
 
+### Frontend
+Below are some screenshots of the frontend in action.
+
+<img src="story_board.png" width="282" height="360">
+<img src="launch.png" width="193" height="340">
+<img src="signup.png" width="193" height="340">
+<img src="login.png" width="193" height="340">
+<img src="friend.png" width="193" height="340">
+<img src="create_event.png" width="193" height="340">
+
 ## Technical details
 Gale currently consists of two parts: the backend (uses Phoenix, a web framework
 written in Elixir; backed by Postgres) by Postgres, and the frontend (an iOS
@@ -384,13 +397,6 @@ event invitation, thus facilitating the immediacy factor we want in Gale. We
 want to make sure our users never ignore the invitation, and leave the event
 host pending on the response. The app also supports friend management and event
 reminders as notifications before the event starts.
-
-<img src="story_board.png" width="282" height="360">
-<img src="launch.png" width="193" height="340">
-<img src="signup.png" width="193" height="340">
-<img src="login.png" width="193" height="340">
-<img src="friend.png" width="193" height="340">
-<img src="create_event.png" width="193" height="340">
 
 ## Application of concepts learned in class
 - SQL queries
@@ -462,35 +468,34 @@ main thread.
 
 ```swift
 func load_events(){
-        # Some code omitted...
-        
-        let task_create = URLSession.shared.dataTask(with: request)
-        { data, response, error in
-            guard let data = data, error == nil else {
-                print(error!)                                 
-                return
+    // Some code omitted...
+
+    let task_create = URLSession.shared.dataTask(with: request)
+    { data, response, error in
+        guard let data = data, error == nil else {
+            print(error!)
+            return
+        }
+        let response = JSON(data:data)
+        if(response["error"]==true){
+            print("load event fail")
+        }else{
+            let reqs = response["payload"]["owned_events"].arrayValue
+            for sub:JSON in reqs{
+                self.event_desc_list.append(sub["description"].string!)
+                self.event_id_list.append(sub["id"].int!)
             }
-            let response = JSON(data:data)
-            if(response["error"]==true){
-                print("load event fail")
-            }else{
-                let reqs = response["payload"]["owned_events"].arrayValue
-                for sub:JSON in reqs{
-                    self.event_desc_list.append(sub["description"].string!)
-                    self.event_id_list.append(sub["id"].int!)
-                }
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
             }
         }
-        task_create.resume()
     }
+    task_create.resume()
+}
 ```
 
 The `DispatchQueue.main.async` ensures that the `reloadData()` will be ran in
 the main thread.
-
 
 Another challenge is that even though Swift has a clear syntax to follow, it can
 be really complicated when working with iOS. The target OS of Gale is iOS 10,
@@ -520,7 +525,7 @@ in the future below.
   should send a push notification to all invitees when a new event is created.
 - Transactions: Ecto allows us to group database operations together in a
   transaction. We should take advantage of this.
-- Event cancelling by the owner: The owner should be able to cancel an event.
+- Event canceling by the owner: The owner should be able to cancel an event.
   This change should also be pushed to all the participants to notify them.
-- Map support: Continuing from location awareness, we can integrate map views
-  into our front end to provide a friendlier interface for users.
+- Map support: Once location-aware events are implemented, we can integrate map
+  views into our front end to provide a friendlier interface for users.

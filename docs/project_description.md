@@ -11,6 +11,7 @@ A simple event scheduling app for busy people with changing schedules. Made by
 5. [Who did what](#who-did-what)
 6. [Difficulties](#difficulties)
   1. [Backend](#backend)
+  2. [Frontend](#frontend)
 7. [Other selling points](#other-selling-points)
 8. [Future work](#future-work)
 
@@ -441,7 +442,7 @@ schema "users" do
 
 It took a bit of time before we figured out this approach.
 
-###Frontend
+### Frontend
 We talked about the different possibilities for the frontend of Gale, including
 implementing as a web app, android app, iOS app, or using ReactNative. We chose
 not to do it with a webapp mostly because one important feature of Gale is that

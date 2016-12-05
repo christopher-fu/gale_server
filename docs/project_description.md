@@ -3,6 +3,17 @@ A simple event scheduling app for busy people with changing schedules. Made by
 [Christopher Fu](https://github.com/chrisf1337) (netid: cf449) and
 [Ken Cheng](https://github.com/almighty-ken) (netid: kc792)
 
+## Table of contents
+1. [Introduction](#introduction)
+2. [Example usage](#example-usage)
+3. [Technical details](#technical-details)
+4. [Application of concepts used in class](#application-of-concepts-learned-in-class)
+5. [Who did what](#who-did-what)
+6. [Difficulties](#difficulties)
+  1. [Backend](#backend)
+7. [Other selling points](#other-selling-points)
+8. [Future work](#future-work)
+
 ## Introduction
 Gale is an application that helps people quickly organize events. Often times,
 it is difficult to meet up with a group of friends on short notice. For example,

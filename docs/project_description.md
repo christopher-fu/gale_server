@@ -3,6 +3,17 @@ A simple event scheduling app for busy people with changing schedules. Made by
 [Christopher Fu](https://github.com/chrisf1337) (netid: cf449) and
 [Ken Cheng](https://github.com/almighty-ken) (netid: kc792)
 
+## Table of contents
+1. [Introduction](#introduction)
+2. [Example usage](#example-usage)
+3. [Technical details](#technical-details)
+4. [Application of concepts used in class](#application-of-concepts-learned-in-class)
+5. [Who did what](#who-did-what)
+6. [Difficulties](#difficulties)
+  1. [Backend](#backend)
+7. [Other selling points](#other-selling-points)
+8. [Future work](#future-work)
+
 ## Introduction
 Gale is an application that helps people quickly organize events. Often times,
 it is difficult to meet up with a group of friends on short notice. For example,
@@ -357,7 +368,7 @@ end
 We can define fields on our model for the event description and time. We can
 also define relationships between our `Event` model and other models (in this
 case, `User`s). `Event`s have a foreign key reference to the event owner, and
-they also have a many-to-many relationship with invitees (also `User`) through
+they also have a many-to-many relationship with invitees (also `User`s) through
 three different join tables.
 
 An ER diagram of Gale's entity model is shown below:
@@ -384,6 +395,7 @@ reminders as notifications before the event starts.
 - SQL queries
 - Normalization
   - Join tables are used extensively
+- Transactions
 
 ## Who did what
 - Chris: Backend
@@ -430,15 +442,29 @@ schema "users" do
 It took a bit of time before we figured out this approach.
 
 ###Frontend
-We talked about the different possibilities for the frontend of Gale, including implementing as a web app, android app, iOS app, or using ReactNative. We chose not to do it with a webapp mostly because one important feature of Gale is that it should be very accessible and convenient, and an app is easier to use in most cases. Since Chris has some experience in iOS development, we decided to write the frontend with Swift.
+We talked about the different possibilities for the frontend of Gale, including
+implementing as a web app, android app, iOS app, or using ReactNative. We chose
+not to do it with a webapp mostly because one important feature of Gale is that
+it should be very accessible and convenient, and an app is easier to use in most
+cases. Since Chris has some experience in iOS development, we decided to write
+the frontend with Swift.
 
-One challenge is figuring out which thread an operation is supposed to be executed on. For the following example, the function `ViewDidLoad()` calls `load_events()` to fetch the list of events pending the user's response. The request is executed in another thread, and updates the value of `event_desc_list` and `event_id_list`. However, the part that we reload the data so it can be correctly displayed in our table has to be executed in the main thread; it turns out that all operations that is going to change the UI has to be ran in the main thread, for example, segues also have to be performed in the main thread.
+One challenge is figuring out which thread an operation is supposed to be
+executed on. For the following example, the function `ViewDidLoad()` calls
+`load_events()` to fetch the list of events pending the user's response. The
+request is executed in another thread, and updates the value of
+`event_desc_list` and `event_id_list`. However, the part that we reload the data
+so it can be correctly displayed in our table has to be executed in the main
+thread; it turns out that all operations that is going to change the UI has to
+be ran in the main thread, for example, segues also have to be performed in the
+main thread.
 
 ```swift
 func load_events(){
         # Some code omitted...
         
-        let task_create = URLSession.shared.dataTask(with: request) { data, response, error in
+        let task_create = URLSession.shared.dataTask(with: request)
+        { data, response, error in
             guard let data = data, error == nil else {
                 print(error!)                                 
                 return
@@ -461,20 +487,39 @@ func load_events(){
     }
 ```
 
-The `DispatchQueue.main.async` ensures that the `reloadData()` will be ran in the main thread.
+The `DispatchQueue.main.async` ensures that the `reloadData()` will be ran in
+the main thread.
 
 
-Another challenge is that even though Swift has a clear syntax to follow, it can be really complicated when working with iOS. The target OS of Gale is iOS 10, and it requires Swift 3. In Swift 3, a majority of OS APIs were renamed, and a lot of them have different behavior comparing to Swift 2. This made debugging hard sometimes, since many documentations on line are for Swift 1&2, we usually have to try several times to get it working.
+Another challenge is that even though Swift has a clear syntax to follow, it can
+be really complicated when working with iOS. The target OS of Gale is iOS 10,
+and it requires Swift 3. In Swift 3, a majority of OS APIs were renamed, and a
+lot of them have different behavior comparing to Swift 2. This made debugging
+hard sometimes, since many documentations on line are for Swift 1&2, we usually
+have to try several times to get it working.
 
 ## Other selling points
-- Our `User` and `Event` entities are in BCNF.
+- Our user entity is in BCNF. There are currently no restrictions on what a
+  user can provide as his `name` (except for max length), so we cannot decompose
+  a `name` into a first and last name. The normality of our event entity is a
+  little bit ambiguous since we use `description` as a catchall for describing
+  the event. Since description can contain information like location, it can be
+  argued that our event entity is not in 1NF.
 
 ## Future work
 Because of time constraints, we had to prioritize our current basic set of
-features to complete and leave out other features. We list a few things that we
-want to add in the future below.
-- Location awareness
-- Push notifications
-- Event cancelling by the owner
-- Map support
-
+features and leave out other features. We list a few things that we want to add
+in the future below.
+- Location awareness: Currently, events do not have a separate field for
+  location. Users must specify the event location as part of the description. We
+  should store event locations separately. If we also keep track of user
+  locations, we could implement other features like inviting nearby friends to
+  events.
+- Push notifications: In the frontend, we currently poll for new events. We
+  should send a push notification to all invitees when a new event is created.
+- Transactions: Ecto allows us to group database operations together in a
+  transaction. We should take advantage of this.
+- Event cancelling by the owner: The owner should be able to cancel an event.
+  This change should also be pushed to all the participants to notify them.
+- Map support: Continuing from location awareness, we can integrate map views
+  into our front end to provide a friendlier interface for users.

@@ -2,7 +2,7 @@
 The backend for Gale. We currently have an
 [iOS client](https://github.com/almighty-ken/iOS_gale) in development. Made by
 [Christopher Fu](https://github.com/chrisf1337) (netid: cf449) and
-[Ken Cheng](https://github.com/almighty-ken) (netid: ...)
+[Ken Cheng](https://github.com/almighty-ken) (netid: kc792)
 
 ## Table of contents
 1. [Setting up](#setting-up)

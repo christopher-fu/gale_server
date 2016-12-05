@@ -364,6 +364,22 @@ An ER diagram of Gale's entity model is shown below:
 
 ![gale-er](gale-er.png)
 
+On the front end side, the iOS app is written in Swift 3, and makes asynchronous
+calls to the back end to fetch the data we need. The json data returned by the
+server are parsed by SwiftyJson, a package that makes json parsing a lot more
+flexible in Swift. A modal is implemented to force the users to respond to a new
+event invitation, thus facilitating the immediacy factor we want in Gale. We
+want to make sure our users never ignore the invitation, and leave the event
+host pending on the response. The app also supports friend management and event
+reminders as notifications before the event starts.
+
+![story_board](story_board.png)
+![launch](launch.png)
+![signup](signup.png)
+![login](login.png)
+![friend](friend.png)
+![create-event](create_event.png)
+
 ## Application of concepts learned in class
 - SQL queries
 - Normalization
@@ -413,6 +429,43 @@ schema "users" do
 
 It took a bit of time before we figured out this approach.
 
+###Frontend
+We talked about the different possibilities for the frontend of Gale, including implementing as a web app, android app, iOS app, or using ReactNative. We chose not to do it with a webapp mostly because one important feature of Gale is that it should be very accessible and convenient, and an app is easier to use in most cases. Since Chris has some experience in iOS development, we decided to write the frontend with Swift.
+
+One challenge is figuring out which thread an operation is supposed to be executed on. For the following example, the function `ViewDidLoad()` calls `load_events()` to fetch the list of events pending the user's response. The request is executed in another thread, and updates the value of `event_desc_list` and `event_id_list`. However, the part that we reload the data so it can be correctly displayed in our table has to be executed in the main thread; it turns out that all operations that is going to change the UI has to be ran in the main thread, for example, segues also have to be performed in the main thread.
+
+```swift
+func load_events(){
+        # Some code omitted...
+        
+        let task_create = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil else {
+                print(error!)                                 
+                return
+            }
+            let response = JSON(data:data)
+            if(response["error"]==true){
+                print("load event fail")
+            }else{
+                let reqs = response["payload"]["owned_events"].arrayValue
+                for sub:JSON in reqs{
+                    self.event_desc_list.append(sub["description"].string!)
+                    self.event_id_list.append(sub["id"].int!)
+                }
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
+        }
+        task_create.resume()
+    }
+```
+
+The `DispatchQueue.main.async` ensures that the `reloadData()` will be ran in the main thread.
+
+
+Another challenge is that even though Swift has a clear syntax to follow, it can be really complicated when working with iOS. The target OS of Gale is iOS 10, and it requires Swift 3. In Swift 3, a majority of OS APIs were renamed, and a lot of them have different behavior comparing to Swift 2. This made debugging hard sometimes, since many documentations on line are for Swift 1&2, we usually have to try several times to get it working.
+
 ## Other selling points
 - Our `User` and `Event` entities are in BCNF.
 
@@ -421,3 +474,7 @@ Because of time constraints, we had to prioritize our current basic set of
 features to complete and leave out other features. We list a few things that we
 want to add in the future below.
 - Location awareness
+- Push notifications
+- Event cancelling by the owner
+- Map support
+

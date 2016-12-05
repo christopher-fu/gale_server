@@ -357,7 +357,7 @@ end
 We can define fields on our model for the event description and time. We can
 also define relationships between our `Event` model and other models (in this
 case, `User`s). `Event`s have a foreign key reference to the event owner, and
-they also have a many-to-many relationship with invitees (also `User`) through
+they also have a many-to-many relationship with invitees (also `User`s) through
 three different join tables.
 
 An ER diagram of Gale's entity model is shown below:
@@ -368,6 +368,7 @@ An ER diagram of Gale's entity model is shown below:
 - SQL queries
 - Normalization
   - Join tables are used extensively
+- Transactions
 
 ## Who did what
 - Chris: Backend
@@ -414,10 +415,23 @@ schema "users" do
 It took a bit of time before we figured out this approach.
 
 ## Other selling points
-- Our `User` and `Event` entities are in BCNF.
+- Our user entity is in BCNF. There are currently no restrictions on what a
+  user can provide as his `name` (except for max length), so we cannot decompose
+  a `name` into a first and last name. The normality of our event entity is a
+  little bit ambiguous since we use `description` as a catchall for describing
+  the event. Since description can contain information like location, it can be
+  argued that our event entity is not in 1NF.
 
 ## Future work
 Because of time constraints, we had to prioritize our current basic set of
-features to complete and leave out other features. We list a few things that we
-want to add in the future below.
-- Location awareness
+features and leave out other features. We list a few things that we want to add
+in the future below.
+- Location awareness: Currently, events do not have a separate field for
+  location. Users must specify the event location as part of the description. We
+  should store event locations separately. If we also keep track of user
+  locations, we could implement other features like inviting nearby friends to
+  events.
+- Push notifications: In the frontend, we currently poll for new events. We
+  should send a push notification to all invitees when a new event is created.
+- Transactions: Ecto allows us to group database operations together in a
+  transaction. We should take advantage of this.
